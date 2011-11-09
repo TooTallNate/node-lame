@@ -102,6 +102,29 @@ Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
 }
 
 
+/* lame_get_disable_reservoir() */
+Handle<Value> node_lame_get_disable_reservoir (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+  return scope.Close(Integer::New(lame_get_disable_reservoir(gfp)));
+}
+
+
+/* lame_set_disable_reservoir() */
+Handle<Value> node_lame_set_disable_reservoir (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+  int val = args[1]->Int32Value();
+  return scope.Close(Integer::New(lame_set_disable_reservoir(gfp, val)));
+}
+
+
 /* lame_get_frameNum() */
 Handle<Value> node_lame_get_frameNum (const Arguments& args) {
   HandleScope scope;
@@ -267,6 +290,8 @@ void Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_close", node_lame_close);
   NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
   NODE_SET_METHOD(target, "lame_encode_flush_nogap", node_lame_encode_flush_nogap);
+  NODE_SET_METHOD(target, "lame_get_disable_reservoir", node_lame_get_disable_reservoir);
+  NODE_SET_METHOD(target, "lame_set_disable_reservoir", node_lame_set_disable_reservoir);
   NODE_SET_METHOD(target, "lame_get_framesize", node_lame_get_framesize);
   NODE_SET_METHOD(target, "lame_get_frameNum", node_lame_get_frameNum);
   NODE_SET_METHOD(target, "lame_get_id3v1_tag", node_lame_get_id3v1_tag);
