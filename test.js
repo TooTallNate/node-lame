@@ -17,6 +17,7 @@ var b0 = lame.lame_get_id3v2_tag(gfp, v2);
 console.error('id3v2 bytes:', b0);
 
 console.error('framesize:', lame.lame_get_framesize(gfp));
+var s = lame.lame_get_framesize(gfp);
 lame.lame_init_params(gfp);
 console.error('framesize:', lame.lame_get_framesize(gfp));
 console.error('VBR mode: %d', lame.lame_get_VBR(gfp));
@@ -28,7 +29,6 @@ console.error('VBR mode: %d', lame.lame_get_VBR(gfp));
 var pigs = fs.readFileSync('pigs.f.s16le.acodec.pcm_s16le.ar.44100.ac.2')
   , num_samples = pigs.length / 4 // 4 is the sample size
   , mp3file = new Buffer(parseInt(1.25 * num_samples + 7200))
-  , s = ~~(144 * 128000 / (44100 + 0))
 console.error('pigs.length:', pigs.length)
 console.error('mp3file.length', mp3file.length);
 console.error('frame size:', s)
