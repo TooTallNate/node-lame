@@ -82,8 +82,8 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 }
 
 
-/* lame_encode_flush() */
-Handle<Value> node_lame_encode_flush (const Arguments& args) {
+/* lame_encode_flush_nogap() */
+Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
   HandleScope scope;
   // TODO: Argument validation
   Local<Object> wrapper = args[0]->ToObject();
@@ -92,7 +92,23 @@ Handle<Value> node_lame_encode_flush (const Arguments& args) {
   unsigned char *mp3buf = (unsigned char *)Buffer::Data(outbuf);
   int mp3buf_size = Buffer::Length(outbuf);
 
-  int b = lame_encode_flush(gfp, mp3buf, mp3buf_size);
+  int b = lame_encode_flush_nogap(gfp, mp3buf, mp3buf_size);
+  return scope.Close(Integer::New(b));
+}
+
+
+/* lame_get_id3v1_tag() */
+Handle<Value> node_lame_get_id3v1_tag (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+  Local<Object> outbuf = args[1]->ToObject();
+  unsigned char *buf = (unsigned char *)Buffer::Data(outbuf);
+  size_t buf_size = (size_t)Buffer::Length(outbuf);
+
+  size_t b = lame_get_id3v1_tag(gfp, buf, buf_size);
   return scope.Close(Integer::New(b));
 }
 
@@ -171,7 +187,8 @@ void Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
   NODE_SET_METHOD(target, "lame_close", node_lame_close);
   NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
-  NODE_SET_METHOD(target, "lame_encode_flush", node_lame_encode_flush);
+  NODE_SET_METHOD(target, "lame_encode_flush_nogap", node_lame_encode_flush_nogap);
+  NODE_SET_METHOD(target, "lame_get_id3v1_tag", node_lame_get_id3v1_tag);
   NODE_SET_METHOD(target, "lame_get_num_channels", node_lame_get_num_channels);
   NODE_SET_METHOD(target, "lame_set_num_channels", node_lame_set_num_channels);
   NODE_SET_METHOD(target, "lame_init_params", node_lame_init_params);
