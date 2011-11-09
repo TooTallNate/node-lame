@@ -33,7 +33,7 @@ var decoder = lame.createDecoder({
   , signed: true          // Signed data values
   , sampleSize: 16        // 16-bit samples
   , sampleRate: 44100     // 44,100 Hz sample rate
-  , endianness: 'little'  // Little-endian
+  , endianness: 'little'  // Little-endian samples
 });
 
 // The decoder should have an MP3 file written to it
@@ -42,3 +42,13 @@ fs.createReadStream('/some/audio/file.mp3').pipe(decoder);
 // Raw PCM data gets fed to stdout. play the stream with `ffplay` or somethin'
 decoder.pipe(process.stdout);
 ```
+
+
+API
+---
+
+## Decoder class
+
+The `Decoder` class is a `Stream` instance that accepts MP3 data written to it,
+and emits raw PCM as `data` events.
+
