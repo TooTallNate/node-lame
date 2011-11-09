@@ -68,6 +68,21 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 }
 
 
+/* lame_encode_flush() */
+Handle<Value> node_lame_encode_flush (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+  Local<Object> outbuf = args[1]->ToObject();
+  unsigned char *mp3buf = (unsigned char *)Buffer::Data(outbuf);
+  int mp3buf_size = Buffer::Length(outbuf);
+
+  int b = lame_encode_flush(gfp, mp3buf, mp3buf_size);
+  return scope.Close(Integer::New(b));
+}
+
+
 /* lame_get_num_channels(gfp) */
 Handle<Value> node_lame_get_num_channels (const Arguments& args) {
   HandleScope scope;
@@ -137,6 +152,7 @@ void Initialize(Handle<Object> target) {
 
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
   NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
+  NODE_SET_METHOD(target, "lame_encode_flush", node_lame_encode_flush);
   NODE_SET_METHOD(target, "lame_get_num_channels", node_lame_get_num_channels);
   NODE_SET_METHOD(target, "lame_set_num_channels", node_lame_set_num_channels);
   NODE_SET_METHOD(target, "lame_init_params", node_lame_init_params);
