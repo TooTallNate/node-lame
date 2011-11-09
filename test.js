@@ -19,6 +19,7 @@ console.error('id3v2 bytes:', b0);
 console.error('framesize:', lame.lame_get_framesize(gfp));
 lame.lame_init_params(gfp);
 console.error('framesize:', lame.lame_get_framesize(gfp));
+console.error('VBR mode: %d', lame.lame_get_VBR(gfp));
 
 //lame.lame_print_config(gfp);
 //lame.lame_print_internals(gfp);
@@ -27,11 +28,18 @@ console.error('framesize:', lame.lame_get_framesize(gfp));
 var pigs = fs.readFileSync('pigs.f.s16le.acodec.pcm_s16le.ar.44100.ac.2')
   , num_samples = pigs.length / 4 // 4 is the sample size
   , mp3file = new Buffer(parseInt(1.25 * num_samples + 7200))
+  , s = ~~(144 * 128000 / (44100 + 0))
 console.error('pigs.length:', pigs.length)
 console.error('mp3file.length', mp3file.length);
+console.error('frame size:', s)
 
 console.error('num frames so far:', lame.lame_get_frameNum(gfp));
 var b = lame.lame_encode_buffer_interleaved(gfp, pigs, num_samples, mp3file);
+console.error(0,mp3file.slice(0, 4)+'')
+console.error(0,mp3file.slice(s, s+4)+'')
+console.error(0,mp3file.slice(s*2, s*2+4)+'')
+console.error(0,mp3file.slice(s*3, s*3+4)+'')
+console.error(0,mp3file.slice(s*4, s*4+4)+'')
 console.error('bytesWritten:', b);
 console.error('num frames so far:', lame.lame_get_frameNum(gfp));
 

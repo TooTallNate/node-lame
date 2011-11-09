@@ -179,6 +179,30 @@ Handle<Value> node_lame_set_num_channels (const Arguments& args) {
 }
 
 
+/* lame_get_VBR(gfp) */
+Handle<Value> node_lame_get_VBR (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+  return scope.Close(Integer::New(lame_get_VBR(gfp)));
+}
+
+
+/* lame_set_VBR(gfp) */
+Handle<Value> node_lame_set_VBR (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+  Local<Number> val = args[1]->ToNumber();
+  vbr_mode mode = (vbr_mode)val->Int32Value();
+  return scope.Close(Integer::New(lame_set_VBR(gfp, mode)));
+}
+
+
 /* lame_init_params(gfp) */
 Handle<Value> node_lame_init_params (const Arguments& args) {
   HandleScope scope;
@@ -224,10 +248,21 @@ void Initialize(Handle<Object> target) {
   gfpClass->SetInternalFieldCount(1);
 
   // Constants
+  // vbr_mode_e
+  target->Set(String::New("vbr_off"), Integer::New(vbr_off), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("vbr_mt"), Integer::New(vbr_mt), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("vbr_rh"), Integer::New(vbr_rh), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("vbr_abr"), Integer::New(vbr_abr), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("vbr_mtrh"), Integer::New(vbr_mtrh), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("vbr_default"), Integer::New(vbr_default), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+
+  // Maximum size of an album art
   target->Set(String::New("MAXALBUMART"), Integer::New(LAME_MAXALBUMART), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
   // This is deprecated I think...
   target->Set(String::New("MAXMP3BUFFER"), Integer::New(LAME_MAXMP3BUFFER), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
 
+
+  // Functions
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
   NODE_SET_METHOD(target, "lame_close", node_lame_close);
   NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
@@ -238,6 +273,8 @@ void Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_get_id3v2_tag", node_lame_get_id3v2_tag);
   NODE_SET_METHOD(target, "lame_get_num_channels", node_lame_get_num_channels);
   NODE_SET_METHOD(target, "lame_set_num_channels", node_lame_set_num_channels);
+  NODE_SET_METHOD(target, "lame_get_VBR", node_lame_get_VBR);
+  NODE_SET_METHOD(target, "lame_set_VBR", node_lame_set_VBR);
   NODE_SET_METHOD(target, "lame_init_params", node_lame_init_params);
   NODE_SET_METHOD(target, "lame_print_config", node_lame_print_config);
   NODE_SET_METHOD(target, "lame_print_internals", node_lame_print_internals);

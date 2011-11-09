@@ -59,7 +59,7 @@ exports.Encoder = Encoder;
 Encoder.prototype.write = function write (b) {
   if (!this._init) this.initParams();
 
-  console.error('Encoder#write');
+  //console.error('Encoder#write');
   var l = b.length
     , num = ~~(l/this.BLOCK_ALIGN)
     , chunk = b.slice(0, num * this.BLOCK_ALIGN)
@@ -67,12 +67,12 @@ Encoder.prototype.write = function write (b) {
 
   if (chunk.length != l) {
     this._backlog.push(b.slice(chunk.length));
-    console.error('pushing to backlog: %d bytes', this._backlog[this._backlog.length-1].length)
+    //console.error('pushing to backlog: %d bytes', this._backlog[this._backlog.length-1].length)
   }
 
-  console.error('beginning to encode %d bytes, %d samples', chunk.length, num);
+  //console.error('beginning to encode %d bytes, %d samples', chunk.length, num);
   var b = bindings.lame_encode_buffer_interleaved(this._gfp, chunk, num, outbuf)
-  console.error('encoded %d bytes', b);
+  //console.error('encoded %d bytes', b);
 
   this.emit('data', outbuf.slice(0, b));
   return true;
@@ -80,10 +80,9 @@ Encoder.prototype.write = function write (b) {
 
 // flush the remaining
 Encoder.prototype.end = function end () {
-  console.error('Encoder#end');
+  //console.error('Encoder#end');
   var buf = new Buffer(9200);
   var b = bindings.lame_encode_flush_nogap(this._gfp, buf);
-  console.error(b)
   this.emit('data', buf.slice(0, b));
   this.emit('end');
 }
