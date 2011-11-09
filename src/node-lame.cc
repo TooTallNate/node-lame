@@ -225,6 +225,7 @@ void Initialize(Handle<Object> target) {
 
   // Constants
   target->Set(String::New("MAXALBUMART"), Integer::New(LAME_MAXALBUMART), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  // This is deprecated I think...
   target->Set(String::New("MAXMP3BUFFER"), Integer::New(LAME_MAXMP3BUFFER), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
 
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);

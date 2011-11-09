@@ -43,7 +43,7 @@ console.error('num frames so far:', lame.lame_get_frameNum(gfp));
 var v1 = new Buffer(150);
 //console.error(v1);
 var b3 = lame.lame_get_id3v1_tag(gfp, v1);
-//console.error(v1);
+console.error(0, v1.toString())
 console.error('id3v1 bytes:', b3);
 
 // Write mp3 data to 'pigs.mp3'
