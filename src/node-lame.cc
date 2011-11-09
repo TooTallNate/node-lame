@@ -34,6 +34,16 @@ Handle<Value> node_get_lame_version (const Arguments& args) {
   return scope.Close(String::New(get_lame_version()));
 }
 
+/* lame_close() */
+Handle<Value> node_lame_close (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+  lame_close(gfp);
+  return Undefined();
+}
+
 
 /* malloc()'s a `lame_t` struct and returns it to JS land */
 Handle<Value> node_malloc_gfp (const Arguments& args) {
@@ -151,6 +161,7 @@ void Initialize(Handle<Object> target) {
   gfpClass->SetInternalFieldCount(1);
 
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
+  NODE_SET_METHOD(target, "lame_close", node_lame_close);
   NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
   NODE_SET_METHOD(target, "lame_encode_flush", node_lame_encode_flush);
   NODE_SET_METHOD(target, "lame_get_num_channels", node_lame_get_num_channels);
