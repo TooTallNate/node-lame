@@ -14,8 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "v8.h"
-#include "node.h"
+#include <v8.h>
+#include <node.h>
+#include <lame/lame.h>
 
 using namespace v8;
 using namespace node;
@@ -23,16 +24,15 @@ using namespace node;
 namespace {
 
 
-Handle<Value> Hello(const Arguments& args) {
+Handle<Value> node_get_lame_version (const Arguments& args) {
   HandleScope scope;
-  return scope.Close(String::NewSymbol("hello"));
+  return scope.Close(String::New(get_lame_version()));
 }
-
 
 void Initialize(Handle<Object> target) {
   HandleScope scope;
 
-  NODE_SET_METHOD(target, "hello", Hello);
+  NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
 
 }
 
