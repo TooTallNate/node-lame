@@ -49,6 +49,21 @@ API
 
 ### Decoder class
 
-The `Decoder` class is a `Stream` instance that accepts MP3 data written to it,
+The `Decoder` class is a `Stream` subclass that accepts MP3 data written to it,
 and emits raw PCM as `data` events.
 
+### Encoder class
+
+The `Encoder` class is a `Stream` subclass that accepts raw PCM data written to
+it, and emits MP3 data as `data` events.
+
+### Parser class
+
+The `Parser` class is an `EventEmitter` subclass that accepts MP3 data being
+written to it, and emits events as the different structures of the MP3 file are
+encountered:
+
+  * `id3v2` event - fired one time when the ID3v2 data at the beginning of the MP3 file has been parsed. A single `Buffer` argument is passed to the callbacks.
+  * `frame` events - fired multiple times as each complete MP3 frame gets written. A single `Buffer` argument is passed that is a complete MP3 frame.
+  * `id3v1` event - fired one time when the ID3v1 data at the end of the MP3 file has been parsed. A single `Buffer` argument is passed that is the ID3 info.
+  * `end` event - fired one time when then end of the MP3 file is encountered.
