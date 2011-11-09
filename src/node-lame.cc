@@ -202,6 +202,29 @@ Handle<Value> node_lame_set_num_channels (const Arguments& args) {
 }
 
 
+/* lame_get_out_samplerate(gfp) */
+Handle<Value> node_lame_get_out_samplerate (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+  return scope.Close(Integer::New(lame_get_out_samplerate(gfp)));
+}
+
+
+/* lame_set_out_samplerate(gfp) */
+Handle<Value> node_lame_set_out_samplerate (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+  int val = args[1]->Int32Value();
+  return scope.Close(Integer::New(lame_set_out_samplerate(gfp, val)));
+}
+
+
 /* lame_get_VBR(gfp) */
 Handle<Value> node_lame_get_VBR (const Arguments& args) {
   HandleScope scope;
@@ -271,9 +294,10 @@ void Initialize(Handle<Object> target) {
   gfpClass->SetInternalFieldCount(1);
 
   // Constants
+  PropertyAttribute readonlydontdelete = static_cast<PropertyAttribute>(ReadOnly|DontDelete);
   // vbr_mode_e
-  target->Set(String::New("vbr_off"), Integer::New(vbr_off), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
-  target->Set(String::New("vbr_mt"), Integer::New(vbr_mt), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("vbr_off"), Integer::New(vbr_off), readonlydontdelete);
+  target->Set(String::New("vbr_mt"), Integer::New(vbr_mt), readonlydontdelete);
   target->Set(String::New("vbr_rh"), Integer::New(vbr_rh), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
   target->Set(String::New("vbr_abr"), Integer::New(vbr_abr), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
   target->Set(String::New("vbr_mtrh"), Integer::New(vbr_mtrh), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
@@ -298,6 +322,8 @@ void Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_get_id3v2_tag", node_lame_get_id3v2_tag);
   NODE_SET_METHOD(target, "lame_get_num_channels", node_lame_get_num_channels);
   NODE_SET_METHOD(target, "lame_set_num_channels", node_lame_set_num_channels);
+  NODE_SET_METHOD(target, "lame_get_out_samplerate", node_lame_get_out_samplerate);
+  NODE_SET_METHOD(target, "lame_set_out_samplerate", node_lame_set_out_samplerate);
   NODE_SET_METHOD(target, "lame_get_VBR", node_lame_get_VBR);
   NODE_SET_METHOD(target, "lame_set_VBR", node_lame_set_VBR);
   NODE_SET_METHOD(target, "lame_init_params", node_lame_init_params);

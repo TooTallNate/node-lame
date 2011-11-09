@@ -1,5 +1,6 @@
 var fs = require('fs')
 var lame = require('./')
+var parse = require('./lib/parse')
 
 var gfp = lame.malloc_gfp();
 console.error('gfp wrapper:', gfp);
@@ -17,8 +18,10 @@ var b0 = lame.lame_get_id3v2_tag(gfp, v2);
 console.error('id3v2 bytes:', b0);
 
 console.error('framesize:', lame.lame_get_framesize(gfp));
-var s = lame.lame_get_framesize(gfp);
+
+//console.error('rate result:', lame.lame_set_out_samplerate(gfp, 48000))
 lame.lame_init_params(gfp);
+var s = lame.lame_get_framesize(gfp);
 console.error('framesize:', lame.lame_get_framesize(gfp));
 console.error('VBR mode: %d', lame.lame_get_VBR(gfp));
 
@@ -35,11 +38,13 @@ console.error('frame size:', s)
 
 console.error('num frames so far:', lame.lame_get_frameNum(gfp));
 var b = lame.lame_encode_buffer_interleaved(gfp, pigs, num_samples, mp3file);
-console.error(0,mp3file.slice(0, 4)+'')
-console.error(0,mp3file.slice(s, s+4)+'')
-console.error(0,mp3file.slice(s*2, s*2+4)+'')
-console.error(0,mp3file.slice(s*3, s*3+4)+'')
-console.error(0,mp3file.slice(s*4, s*4+4)+'')
+
+/*console.error(0,mp3file.slice(0, 4))
+console.error(s,mp3file.slice(s, s+4))
+console.error(s*2,mp3file.slice(s*2, s*2+4))
+console.error(s*3,mp3file.slice(s*3, s*3+4))
+console.error(s*4,mp3file.slice(s*4, s*4+4))*/
+
 console.error('bytesWritten:', b);
 console.error('num frames so far:', lame.lame_get_frameNum(gfp));
 
@@ -47,15 +52,33 @@ var b2 = lame.lame_encode_flush_nogap(gfp, mp3file.slice(b))
 console.error('after flush:', b2);
 console.error('num frames so far:', lame.lame_get_frameNum(gfp));
 
+var i = 0
+  , cur = mp3file.slice(0, b + b2)
+do {
+  if (!cur.length) break;
+  if (cur.length < 100000) {
+    mp3file = cur;
+    break;
+  }
+  console.error(0, 'parsing', cur.slice(0, 4));
+  var par = parse.parseFrameHeader(cur)
+  console.error(par);
+  cur = cur.slice(par.frameSize)
+  if (cur[0] === 0) break;
+  i++
+} while (true)
+console.error(cur.length)
+
 // ID3v1
 var v1 = new Buffer(150);
 //console.error(v1);
 var b3 = lame.lame_get_id3v1_tag(gfp, v1);
-console.error(0, v1.toString())
+//console.error(0, v1.toString())
 console.error('id3v1 bytes:', b3);
 
 // Write mp3 data to 'pigs.mp3'
-fs.writeFileSync('pigs.mp3', mp3file.slice(0, b + b2));
+//fs.writeFileSync('pigs.mp3', mp3file.slice(0, b + b2));
+fs.writeFileSync('pigs.mp3', mp3file);
 
 // call lame_close()
 lame.lame_close(gfp);

@@ -1,4 +1,4 @@
-var bindings = require('./build/default/nodelame.node')
+var bindings = require('./build/Release/nodelame.node')
   , inherits = require('util').inherits
   , Stream = require('stream').Stream
 
@@ -47,10 +47,28 @@ Config.prototype.printInternals = function printInternals () {
   return bindings.lame_print_internals(this._gfp);
 }
 
+Object.defineProperty(Config.prototype, 'framesize', {
+    get: function () {
+      if (!this._init) this.initParams();
+      return bindings.lame_get_framesize(this._gfp);
+    }
+});
+
+Object.defineProperty(Config.prototype, 'bitReservoir', {
+    get: function () {
+      return bindings.lame_get_bidable_reservoir(this._gfp);
+    }
+  , set: function (v) {
+      var rtn = bindings.lame_set_disable_reservoir(this._gfp, v ? 0 : 1)
+    }
+});
+
 
 // Encoder class
 function Encoder (opts) {
   Config.call(this);
+  // disable the bit reservoir
+  this.bitReservoir = false;
 }
 inherits(Encoder, Config);
 exports.Encoder = Encoder;
@@ -67,7 +85,7 @@ Encoder.prototype.write = function write (b) {
 
   if (chunk.length != l) {
     this._backlog.push(b.slice(chunk.length));
-    //console.error('pushing to backlog: %d bytes', this._backlog[this._backlog.length-1].length)
+    console.error('pushing to backlog: %d bytes', this._backlog[this._backlog.length-1].length)
   }
 
   //console.error('beginning to encode %d bytes, %d samples', chunk.length, num);
