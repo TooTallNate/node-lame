@@ -47,7 +47,7 @@ decoder.pipe(process.stdout);
 API
 ---
 
-## Decoder class
+### Decoder class
 
 The `Decoder` class is a `Stream` instance that accepts MP3 data written to it,
 and emits raw PCM as `data` events.
