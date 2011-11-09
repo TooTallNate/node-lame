@@ -16,6 +16,7 @@
 
 #include <v8.h>
 #include <node.h>
+#include <node_buffer.h>
 #include <lame/lame.h>
 
 using namespace v8;
@@ -44,6 +45,26 @@ Handle<Value> node_malloc_gfp (const Arguments& args) {
   wrapper->SetPointerInInternalField(0, gfp);
 
   return scope.Close(wrapper);
+}
+
+
+/* lame_encode_buffer_interleaved() */
+Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+  // Turn into 'short int []'
+  char *input = Buffer::Data(args[1]->ToObject());
+  short int *pcm = (short int *)input;
+  // num in 1 channel, not entire pcm array
+  int num_samples = args[2]->Int32Value();
+  Local<Object> outbuf = args[3]->ToObject();
+  unsigned char *mp3buf = (unsigned char *)Buffer::Data(outbuf);
+  int mp3buf_size = Buffer::Length(outbuf);
+
+  int b = lame_encode_buffer_interleaved(gfp, pcm, num_samples, mp3buf, mp3buf_size);
+  return scope.Close(Integer::New(b));
 }
 
 
@@ -77,9 +98,21 @@ Handle<Value> node_lame_init_params (const Arguments& args) {
   Local<Object> wrapper = args[0]->ToObject();
   lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
 
-  if (lame_init_params(gfp) == -1) {
+  if (lame_init_params(gfp) < 0) {
     return ThrowException(String::New("lame_init_params() failed"));
   }
+  return Undefined();
+}
+
+
+/* lame_print_internals() */
+Handle<Value> node_lame_print_internals (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+  lame_print_internals(gfp);
   return Undefined();
 }
 
@@ -103,10 +136,12 @@ void Initialize(Handle<Object> target) {
   gfpClass->SetInternalFieldCount(1);
 
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
+  NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
   NODE_SET_METHOD(target, "lame_get_num_channels", node_lame_get_num_channels);
   NODE_SET_METHOD(target, "lame_set_num_channels", node_lame_set_num_channels);
   NODE_SET_METHOD(target, "lame_init_params", node_lame_init_params);
   NODE_SET_METHOD(target, "lame_print_config", node_lame_print_config);
+  NODE_SET_METHOD(target, "lame_print_internals", node_lame_print_internals);
   NODE_SET_METHOD(target, "malloc_gfp", node_malloc_gfp);
 
 }
