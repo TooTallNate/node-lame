@@ -51,6 +51,10 @@ Handle<Value> node_malloc_gfp (const Arguments& args) {
 
   lame_global_flags *gfp = lame_init();
 
+  // disable id3v2 in the encode stream;
+  // user must call lame_getid3v2_tag() manually
+  lame_set_write_id3tag_automatic(gfp, 0);
+
   Local<Object> wrapper = gfpClass->NewInstance();
   wrapper->SetPointerInInternalField(0, gfp);
 
