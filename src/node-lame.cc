@@ -160,6 +160,10 @@ void Initialize(Handle<Object> target) {
   gfpClass = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
   gfpClass->SetInternalFieldCount(1);
 
+  // Constants
+  target->Set(String::New("MAXALBUMART"), Integer::New(LAME_MAXALBUMART), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("MAXMP3BUFFER"), Integer::New(LAME_MAXMP3BUFFER), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
   NODE_SET_METHOD(target, "lame_close", node_lame_close);
   NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
