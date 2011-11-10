@@ -6,12 +6,15 @@ var parser = new Parser();
 f.pipe(parser);
 
 parser.on('header', function (b, meta) {
-  console.error('header:', meta);
+  //console.error('header', meta);
   process.stdout.write(b);
 }).on('frame', function (b) {
-  console.error('frame');
+  //console.error('frame');
   process.stdout.write(b);
+}).on('id3v2', function (b) {
+  console.error('id3v2');
+  console.error(b.length, b.toString('binary', 0, 100));
 }).on('id3v1', function (b) {
   console.error('id3v1');
-  console.error(b.length);
+  console.error(b.length, b.toString());
 });
