@@ -11,4 +11,7 @@ parser.on('header', function (b, meta) {
 }).on('frame', function (b) {
   console.error('frame');
   process.stdout.write(b);
+}).on('id3v1', function (b) {
+  console.error('id3v1');
+  console.error(b.length);
 });
