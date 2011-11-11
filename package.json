@@ -1,0 +1,15 @@
+{   "name": "lame"
+  , "description": "NodeJS native bindings to libmp3lame."
+  , "keywords": [ "lame", "mp3", "mpeg", "mpg", "encode", "decode", "parse" ]
+  , "version": "0.0.0"
+  , "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)"
+  , "repository": { "type": "git", "url": "git://github.com/TooTallNate/node-lame.git" }
+  , "main": "./index.js"
+  , "dependencies": {
+      "strtok": "0.1.x"
+    }
+  , "scripts": {
+      "test": "./test/run.sh"
+    }
+  , "engines": { "node": ">= 0.6.0" }
+}
