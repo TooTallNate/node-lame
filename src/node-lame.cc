@@ -225,6 +225,17 @@ Handle<Value> node_lame_set_out_samplerate (const Arguments& args) {
 }
 
 
+/* lame_get_version(gfp) */
+Handle<Value> node_lame_get_version (const Arguments& args) {
+  HandleScope scope;
+  // TODO: Argument validation
+  Local<Object> wrapper = args[0]->ToObject();
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+  return scope.Close(Integer::New(lame_get_version(gfp)));
+}
+
+
 /* lame_get_VBR(gfp) */
 Handle<Value> node_lame_get_VBR (const Arguments& args) {
   HandleScope scope;
@@ -324,6 +335,7 @@ void Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_set_num_channels", node_lame_set_num_channels);
   NODE_SET_METHOD(target, "lame_get_out_samplerate", node_lame_get_out_samplerate);
   NODE_SET_METHOD(target, "lame_set_out_samplerate", node_lame_set_out_samplerate);
+  NODE_SET_METHOD(target, "lame_get_version", node_lame_get_version);
   NODE_SET_METHOD(target, "lame_get_VBR", node_lame_get_VBR);
   NODE_SET_METHOD(target, "lame_set_VBR", node_lame_set_VBR);
   NODE_SET_METHOD(target, "lame_init_params", node_lame_init_params);
