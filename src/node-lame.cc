@@ -217,6 +217,21 @@ Handle<Value> node_lame_get_id3v2_tag (const Arguments& args) {
 }
 
 
+/* lame_get_in_samplerate(gfp) */
+Handle<Value> node_lame_get_num_channels (const Arguments& args) {
+  UNWRAP_GFP;
+  return scope.Close(Integer::New(lame_get_in_samplerate(gfp)));
+}
+
+
+/* lame_set_set_in_samplerate(gfp) */
+Handle<Value> node_lame_set_num_channels (const Arguments& args) {
+  UNWRAP_GFP;
+  int val = args[1]->Int32Value();
+  return scope.Close(Integer::New(lame_set_in_samplerate(gfp, val)));
+}
+
+
 /* lame_get_num_channels(gfp) */
 Handle<Value> node_lame_get_num_channels (const Arguments& args) {
   UNWRAP_GFP;
@@ -329,6 +344,8 @@ void Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_get_frameNum", node_lame_get_frameNum);
   NODE_SET_METHOD(target, "lame_get_id3v1_tag", node_lame_get_id3v1_tag);
   NODE_SET_METHOD(target, "lame_get_id3v2_tag", node_lame_get_id3v2_tag);
+  NODE_SET_METHOD(target, "lame_get_in_samplerate", node_lame_get_in_samplerate);
+  NODE_SET_METHOD(target, "lame_set_in_samplerate", node_lame_set_in_samplerate);
   NODE_SET_METHOD(target, "lame_get_num_channels", node_lame_get_num_channels);
   NODE_SET_METHOD(target, "lame_set_num_channels", node_lame_set_num_channels);
   NODE_SET_METHOD(target, "lame_get_out_samplerate", node_lame_get_out_samplerate);
