@@ -1,6 +1,11 @@
+
+/**
+ * Proof of concept, basically, of the low-level bindings.
+ */
+
 var fs = require('fs')
-var lame = require('./')
-var parse = require('./lib/parse')
+  , lame = require('./lib/bindings')
+  , parse = require('./lib/parse')
 
 var gfp = lame.malloc_gfp();
 console.error('gfp wrapper:', gfp);
@@ -40,12 +45,6 @@ console.error('num frames so far:', lame.lame_get_frameNum(gfp));
 lame.lame_encode_buffer_interleaved(gfp, pigs, num_samples, mp3file, function (err, b) {
   console.error('after encode:',err, b);
 
-
-/*console.error(0,mp3file.slice(0, 4))
-console.error(s,mp3file.slice(s, s+4))
-console.error(s*2,mp3file.slice(s*2, s*2+4))
-console.error(s*3,mp3file.slice(s*3, s*3+4))
-console.error(s*4,mp3file.slice(s*4, s*4+4))*/
 
 console.error('bytesWritten:', b);
 console.error('num frames so far:', lame.lame_get_frameNum(gfp));
