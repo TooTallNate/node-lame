@@ -158,6 +158,21 @@ Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
 }
 
 
+/* lame_get_brate() */
+Handle<Value> node_lame_get_brate (const Arguments& args) {
+  UNWRAP_GFP;
+  return scope.Close(Integer::New(lame_get_brate(gfp)));
+}
+
+
+/* lame_set_brate() */
+Handle<Value> node_lame_set_brate (const Arguments& args) {
+  UNWRAP_GFP;
+  int val = args[1]->Int32Value();
+  return scope.Close(Integer::New(lame_set_brate(gfp, val)));
+}
+
+
 /* lame_get_disable_reservoir() */
 Handle<Value> node_lame_get_disable_reservoir (const Arguments& args) {
   UNWRAP_GFP;
@@ -218,14 +233,14 @@ Handle<Value> node_lame_get_id3v2_tag (const Arguments& args) {
 
 
 /* lame_get_in_samplerate(gfp) */
-Handle<Value> node_lame_get_num_channels (const Arguments& args) {
+Handle<Value> node_lame_get_in_samplerate (const Arguments& args) {
   UNWRAP_GFP;
   return scope.Close(Integer::New(lame_get_in_samplerate(gfp)));
 }
 
 
 /* lame_set_set_in_samplerate(gfp) */
-Handle<Value> node_lame_set_num_channels (const Arguments& args) {
+Handle<Value> node_lame_set_in_samplerate (const Arguments& args) {
   UNWRAP_GFP;
   int val = args[1]->Int32Value();
   return scope.Close(Integer::New(lame_set_in_samplerate(gfp, val)));
@@ -338,6 +353,8 @@ void Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_close", node_lame_close);
   NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
   NODE_SET_METHOD(target, "lame_encode_flush_nogap", node_lame_encode_flush_nogap);
+  NODE_SET_METHOD(target, "lame_get_brate", node_lame_get_brate);
+  NODE_SET_METHOD(target, "lame_set_brate", node_lame_set_brate);
   NODE_SET_METHOD(target, "lame_get_disable_reservoir", node_lame_get_disable_reservoir);
   NODE_SET_METHOD(target, "lame_set_disable_reservoir", node_lame_set_disable_reservoir);
   NODE_SET_METHOD(target, "lame_get_framesize", node_lame_get_framesize);
