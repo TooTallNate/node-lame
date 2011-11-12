@@ -8,7 +8,7 @@ var fs = require('fs')
   , lame = require('../lib/bindings')
   , parse = require('../lib/parse')
 
-var gfp = lame.malloc_gfp();
+var gfp = lame.lame_init();
 console.error('gfp wrapper:', gfp);
 
 /*console.error('num_channels: %d', lame.lame_get_num_channels(gfp));

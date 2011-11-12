@@ -60,13 +60,14 @@ Handle<Value> node_lame_close (const Arguments& args) {
 
 
 /* malloc()'s a `lame_t` struct and returns it to JS land */
-Handle<Value> node_malloc_gfp (const Arguments& args) {
+Handle<Value> node_lame_init (const Arguments& args) {
   HandleScope scope;
 
   lame_global_flags *gfp = lame_init();
 
   // disable id3v2 in the encode stream;
   // user must call lame_getid3v2_tag() manually
+  // TODO: Move to it's own binding function
   lame_set_write_id3tag_automatic(gfp, 0);
 
   Local<Object> wrapper = gfpClass->NewInstance();
@@ -204,6 +205,7 @@ Handle<Value> node_lame_get_framesize (const Arguments& args) {
 
 /* lame_get_id3v1_tag()
  * Must be called *after* lame_encode_flush()
+ * TODO: Make async
  */
 Handle<Value> node_lame_get_id3v1_tag (const Arguments& args) {
   UNWRAP_GFP;
@@ -219,6 +221,7 @@ Handle<Value> node_lame_get_id3v1_tag (const Arguments& args) {
 
 /* lame_get_id3v2_tag()
  * Must be called *before* lame_init_params()
+ * TODO: Make async
  */
 Handle<Value> node_lame_get_id3v2_tag (const Arguments& args) {
   UNWRAP_GFP;
@@ -373,7 +376,7 @@ void Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_init_params", node_lame_init_params);
   NODE_SET_METHOD(target, "lame_print_config", node_lame_print_config);
   NODE_SET_METHOD(target, "lame_print_internals", node_lame_print_internals);
-  NODE_SET_METHOD(target, "malloc_gfp", node_malloc_gfp);
+  NODE_SET_METHOD(target, "lame_init", node_lame_init);
 
 }
 
