@@ -24,6 +24,12 @@ using namespace node;
 
 namespace {
 
+#define UNWRAP_GFP \
+  HandleScope scope; \
+  Local<Object> wrapper = args[0]->ToObject(); \
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0); \
+
+
 /* Wrapper ObjectTemplate to hold `lame_t` instances */
 Persistent<ObjectTemplate> gfpClass;
 
@@ -47,10 +53,7 @@ Handle<Value> node_get_lame_version (const Arguments& args) {
 
 /* lame_close() */
 Handle<Value> node_lame_close (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+  UNWRAP_GFP;
   lame_close(gfp);
   return Undefined();
 }
@@ -109,11 +112,7 @@ EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
 /* lame_encode_buffer_interleaved()
  * The main encoding function */
 Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
-  HandleScope scope;
-
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+  UNWRAP_GFP;
 
   // the input buffer
   char *input = Buffer::Data(args[1]->ToObject());
@@ -146,10 +145,7 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 
 /* lame_encode_flush_nogap() */
 Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+  UNWRAP_GFP;
 
   Local<Object> outbuf = args[1]->ToObject();
   unsigned char *mp3buf = (unsigned char *)Buffer::Data(outbuf);
@@ -162,22 +158,14 @@ Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
 
 /* lame_get_disable_reservoir() */
 Handle<Value> node_lame_get_disable_reservoir (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   return scope.Close(Integer::New(lame_get_disable_reservoir(gfp)));
 }
 
 
 /* lame_set_disable_reservoir() */
 Handle<Value> node_lame_set_disable_reservoir (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   int val = args[1]->Int32Value();
   return scope.Close(Integer::New(lame_set_disable_reservoir(gfp, val)));
 }
@@ -185,32 +173,23 @@ Handle<Value> node_lame_set_disable_reservoir (const Arguments& args) {
 
 /* lame_get_frameNum() */
 Handle<Value> node_lame_get_frameNum (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   return scope.Close(Integer::New(lame_get_frameNum(gfp)));
 }
 
 
 /* lame_get_framesize() */
 Handle<Value> node_lame_get_framesize (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   return scope.Close(Integer::New(lame_get_framesize(gfp)));
 }
 
 
-/* lame_get_id3v1_tag() */
+/* lame_get_id3v1_tag()
+ * Must be called *after* lame_encode_flush()
+ */
 Handle<Value> node_lame_get_id3v1_tag (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+  UNWRAP_GFP;
 
   Local<Object> outbuf = args[1]->ToObject();
   unsigned char *buf = (unsigned char *)Buffer::Data(outbuf);
@@ -221,12 +200,11 @@ Handle<Value> node_lame_get_id3v1_tag (const Arguments& args) {
 }
 
 
-/* lame_get_id3v2_tag() */
+/* lame_get_id3v2_tag()
+ * Must be called *before* lame_init_params()
+ */
 Handle<Value> node_lame_get_id3v2_tag (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+  UNWRAP_GFP;
 
   Local<Object> outbuf = args[1]->ToObject();
   unsigned char *buf = (unsigned char *)Buffer::Data(outbuf);
@@ -239,92 +217,60 @@ Handle<Value> node_lame_get_id3v2_tag (const Arguments& args) {
 
 /* lame_get_num_channels(gfp) */
 Handle<Value> node_lame_get_num_channels (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   return scope.Close(Integer::New(lame_get_num_channels(gfp)));
 }
 
 
 /* lame_set_num_channels(gfp) */
 Handle<Value> node_lame_set_num_channels (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
-  Local<Number> val = args[1]->ToNumber();
-  return scope.Close(Integer::New(lame_set_num_channels(gfp, val->Int32Value())));
+  UNWRAP_GFP;
+  int val = args[1]->Int32Value();
+  return scope.Close(Integer::New(lame_set_num_channels(gfp, val)));
 }
 
 
 /* lame_get_out_samplerate(gfp) */
 Handle<Value> node_lame_get_out_samplerate (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   return scope.Close(Integer::New(lame_get_out_samplerate(gfp)));
 }
 
 
 /* lame_set_out_samplerate(gfp) */
 Handle<Value> node_lame_set_out_samplerate (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   int val = args[1]->Int32Value();
   return scope.Close(Integer::New(lame_set_out_samplerate(gfp, val)));
 }
 
 
-/* lame_get_version(gfp) */
+/* lame_get_version(gfp)
+   version  0=MPEG-2  1=MPEG-1  (2=MPEG-2.5)     */
 Handle<Value> node_lame_get_version (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   return scope.Close(Integer::New(lame_get_version(gfp)));
 }
 
 
 /* lame_get_VBR(gfp) */
 Handle<Value> node_lame_get_VBR (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   return scope.Close(Integer::New(lame_get_VBR(gfp)));
 }
 
 
 /* lame_set_VBR(gfp) */
 Handle<Value> node_lame_set_VBR (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
-  Local<Number> val = args[1]->ToNumber();
-  vbr_mode mode = (vbr_mode)val->Int32Value();
+  UNWRAP_GFP;
+  vbr_mode mode = (vbr_mode)args[1]->Int32Value();
   return scope.Close(Integer::New(lame_set_VBR(gfp, mode)));
 }
 
 
 /* lame_init_params(gfp) */
 Handle<Value> node_lame_init_params (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   if (lame_init_params(gfp) < 0) {
     return ThrowException(String::New("lame_init_params() failed"));
   }
@@ -334,11 +280,7 @@ Handle<Value> node_lame_init_params (const Arguments& args) {
 
 /* lame_print_internals() */
 Handle<Value> node_lame_print_internals (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   lame_print_internals(gfp);
   return Undefined();
 }
@@ -346,11 +288,7 @@ Handle<Value> node_lame_print_internals (const Arguments& args) {
 
 /* lame_print_config() */
 Handle<Value> node_lame_print_config (const Arguments& args) {
-  HandleScope scope;
-  // TODO: Argument validation
-  Local<Object> wrapper = args[0]->ToObject();
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
-
+  UNWRAP_GFP;
   lame_print_config(gfp);
   return Undefined();
 }
