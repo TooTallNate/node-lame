@@ -75,6 +75,7 @@ Handle<Value> node_malloc_gfp (const Arguments& args) {
   return scope.Close(wrapper);
 }
 
+/* encode a buffer on the thread pool. */
 void
 EIO_encode_buffer_interleaved (uv_work_t *req) {
   encode_req *r = (encode_req *)req->data;
@@ -92,7 +93,6 @@ EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
   HandleScope scope;
 
   encode_req *r = (encode_req *)req->data;
-  delete req;
 
   Handle<Value> argv[1];
   argv[0] = Integer::New(r->rtn);
@@ -104,8 +104,10 @@ EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
   if (try_catch.HasCaught())
     FatalException(try_catch);
 
+  // cleanup
   r->callback.Dispose();
   delete r;
+  delete req;
 }
 
 
