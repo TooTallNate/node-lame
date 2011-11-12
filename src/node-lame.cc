@@ -91,19 +91,12 @@ EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
   encode_req *r = (encode_req *)req->data;
   delete req;
 
-  Handle<Value> argv[2];
-  if (r->rtn < 0) {
-    // error
-    argv[0] = Exception::Error(String::New("encoding error"));
-    argv[1] = Undefined();
-  } else {
-    argv[0] = Undefined();
-    argv[1] = Integer::New(r->rtn);
-  }
+  Handle<Value> argv[1];
+  argv[0] = Integer::New(r->rtn);
 
   TryCatch try_catch;
 
-  r->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+  r->callback->Call(Context::GetCurrent()->Global(), 1, argv);
 
   if (try_catch.HasCaught())
     FatalException(try_catch);
@@ -113,26 +106,32 @@ EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
 }
 
 
-/* lame_encode_buffer_interleaved() */
+/* lame_encode_buffer_interleaved()
+ * The main encoding function */
 Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
   HandleScope scope;
+
   // TODO: Argument validation
   Local<Object> wrapper = args[0]->ToObject();
   lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
 
-  // Turn into 'short int []'
+  // the input buffer
   char *input = Buffer::Data(args[1]->ToObject());
+  int num_samples = args[2]->Int32Value();
 
   // the output buffer
   Local<Object> outbuf = args[3]->ToObject();
+  int out_offset = args[4]->Int32Value();
+  char *output = Buffer::Data(outbuf) + out_offset;
+  int output_size = args[5]->Int32Value();
 
   encode_req *request = new encode_req;
   request->gfp = gfp;
   request->input = (unsigned char *)input;
-  request->num_samples = args[2]->Int32Value();
-  request->output = (unsigned char *)Buffer::Data(outbuf);
-  request->output_size = Buffer::Length(outbuf);
-  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[4]));
+  request->num_samples = num_samples;
+  request->output = (unsigned char *)output;
+  request->output_size = output_size;
+  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[6]));
 
   uv_work_t *req = new uv_work_t();
   req->data = request;
