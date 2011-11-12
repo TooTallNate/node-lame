@@ -4,15 +4,18 @@
  */
 
 var fs = require('fs')
-  , lame = require('./lib/bindings')
-  , parse = require('./lib/parse')
+  , assert = require('assert')
+  , lame = require('../lib/bindings')
+  , parse = require('../lib/parse')
 
 var gfp = lame.malloc_gfp();
 console.error('gfp wrapper:', gfp);
+
 /*console.error('num_channels: %d', lame.lame_get_num_channels(gfp));
 lame.lame_set_num_channels(gfp, 1);
 console.error('num_channels: %d', lame.lame_get_num_channels(gfp));
 lame.lame_set_num_channels(gfp, 2);*/
+
 console.error('num_channels: %d', lame.lame_get_num_channels(gfp));
 
 // get id3v2 data
@@ -30,11 +33,8 @@ var s = lame.lame_get_framesize(gfp);
 console.error('framesize:', lame.lame_get_framesize(gfp));
 console.error('VBR mode: %d', lame.lame_get_VBR(gfp));
 
-//lame.lame_print_config(gfp);
-//lame.lame_print_internals(gfp);
-
 //var pigs = fs.readFileSync('pigs.wav')
-var pigs = fs.readFileSync('pigs.f.s16le.acodec.pcm_s16le.ar.44100.ac.2')
+var pigs = fs.readFileSync(__dirname+'/../pigs.f.s16le.acodec.pcm_s16le.ar.44100.ac.2')
   , num_samples = pigs.length / 4 // 4 is the sample size
   , mp3file = new Buffer(parseInt(1.25 * num_samples + 7200))
 console.error('pigs.length:', pigs.length)
@@ -42,6 +42,7 @@ console.error('mp3file.length', mp3file.length);
 console.error('frame size:', s)
 
 console.error('num frames so far:', lame.lame_get_frameNum(gfp));
+
 lame.lame_encode_buffer_interleaved(gfp, pigs, num_samples, mp3file, function (err, b) {
   console.error('after encode:',err, b);
 

@@ -1,5 +1,5 @@
 var id3 = require('id3')
-  , Parser = require('./lib/parser')
+  , Parser = require('../lib/parser')
 
 // Read an MPEG file from stdin
 var f = process.stdin;
