@@ -1,4 +1,4 @@
-var bindings = require('./build/Release/nodelame.node')
+var bindings = require('./lib/bindings')
   , inherits = require('util').inherits
   , Stream = require('stream').Stream
 
