@@ -137,7 +137,6 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 
   uv_work_t *req = new uv_work_t();
   req->data = request;
-
   uv_queue_work(uv_default_loop(),
                 req,
                 EIO_encode_buffer_interleaved,
@@ -146,16 +145,39 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 }
 
 
+void
+EIO_encode_flush_nogap (uv_work_t *req) {
+  encode_req *r = (encode_req *)req->data;
+  r->rtn = lame_encode_flush_nogap(
+    r->gfp,
+    r->output,
+    r->output_size
+  );
+}
+
 /* lame_encode_flush_nogap() */
 Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
   UNWRAP_GFP;
 
+  // the output buffer
   Local<Object> outbuf = args[1]->ToObject();
-  unsigned char *mp3buf = (unsigned char *)Buffer::Data(outbuf);
-  int mp3buf_size = Buffer::Length(outbuf);
+  int out_offset = args[2]->Int32Value();
+  char *output = Buffer::Data(outbuf) + out_offset;
+  int output_size = args[3]->Int32Value();
 
-  int b = lame_encode_flush_nogap(gfp, mp3buf, mp3buf_size);
-  return scope.Close(Integer::New(b));
+  encode_req *r = new encode_req;
+  r->gfp = gfp;
+  r->output = (unsigned char *)output;
+  r->output_size = output_size;
+  r->callback = Persistent<Function>::New(Local<Function>::Cast(args[4]));
+
+  uv_work_t *req = new uv_work_t();
+  req->data = r;
+  uv_queue_work(uv_default_loop(),
+                req,
+                EIO_encode_flush_nogap,
+                EIO_encode_buffer_interleaved_AFTER);
+  return Undefined();
 }
 
 
