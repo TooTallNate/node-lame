@@ -27,6 +27,17 @@ namespace {
 /* Wrapper ObjectTemplate to hold `lame_t` instances */
 Persistent<ObjectTemplate> gfpClass;
 
+/* struct that's used for async encoding */
+struct encode_req {
+  lame_global_flags *gfp;
+  unsigned char *input;
+  int num_samples;
+  unsigned char *output;
+  int output_size;
+  int rtn;
+  Persistent<Function> callback;
+};
+
 
 /* get_lame_version() */
 Handle<Value> node_get_lame_version (const Arguments& args) {
@@ -61,6 +72,46 @@ Handle<Value> node_malloc_gfp (const Arguments& args) {
   return scope.Close(wrapper);
 }
 
+void
+EIO_encode_buffer_interleaved (uv_work_t *req) {
+  encode_req *r = (encode_req *)req->data;
+  r->rtn = lame_encode_buffer_interleaved(
+    r->gfp,
+    (short int *)r->input,
+    r->num_samples,
+    r->output,
+    r->output_size
+  );
+}
+
+void
+EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
+  HandleScope scope;
+
+  encode_req *r = (encode_req *)req->data;
+  delete req;
+
+  Handle<Value> argv[2];
+  if (r->rtn < 0) {
+    // error
+    argv[0] = Exception::Error(String::New("encoding error"));
+    argv[1] = Undefined();
+  } else {
+    argv[0] = Undefined();
+    argv[1] = Integer::New(r->rtn);
+  }
+
+  TryCatch try_catch;
+
+  r->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+
+  if (try_catch.HasCaught())
+    FatalException(try_catch);
+
+  r->callback.Dispose();
+  delete r;
+}
+
 
 /* lame_encode_buffer_interleaved() */
 Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
@@ -71,18 +122,26 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 
   // Turn into 'short int []'
   char *input = Buffer::Data(args[1]->ToObject());
-  short int *pcm = (short int *)input;
-
-  // num in 1 channel, not entire pcm array
-  int num_samples = args[2]->Int32Value();
 
   // the output buffer
   Local<Object> outbuf = args[3]->ToObject();
-  unsigned char *mp3buf = (unsigned char *)Buffer::Data(outbuf);
-  int mp3buf_size = Buffer::Length(outbuf);
 
-  int b = lame_encode_buffer_interleaved(gfp, pcm, num_samples, mp3buf, mp3buf_size);
-  return scope.Close(Integer::New(b));
+  encode_req *request = new encode_req;
+  request->gfp = gfp;
+  request->input = (unsigned char *)input;
+  request->num_samples = args[2]->Int32Value();
+  request->output = (unsigned char *)Buffer::Data(outbuf);
+  request->output_size = Buffer::Length(outbuf);
+  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[4]));
+
+  uv_work_t *req = new uv_work_t();
+  req->data = request;
+
+  uv_queue_work(uv_default_loop(),
+                req,
+                EIO_encode_buffer_interleaved,
+                EIO_encode_buffer_interleaved_AFTER);
+  return Undefined();
 }
 
 
