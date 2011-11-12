@@ -37,7 +37,9 @@ console.error('mp3file.length', mp3file.length);
 console.error('frame size:', s)
 
 console.error('num frames so far:', lame.lame_get_frameNum(gfp));
-var b = lame.lame_encode_buffer_interleaved(gfp, pigs, num_samples, mp3file);
+lame.lame_encode_buffer_interleaved(gfp, pigs, num_samples, mp3file, function (err, b) {
+  console.error('after encode:',err, b);
+
 
 /*console.error(0,mp3file.slice(0, 4))
 console.error(s,mp3file.slice(s, s+4))
@@ -82,3 +84,6 @@ fs.writeFileSync('pigs.mp3', mp3file);
 
 // call lame_close()
 lame.lame_close(gfp);
+
+
+});
