@@ -14,7 +14,7 @@ r('./lib/parser');
 
 function r (m) {
   var mod = require(m);
-  for (var i in m) {
-    exports[i] = m[i];
+  for (var i in mod) {
+    exports[i] = mod[i];
   }
 }
