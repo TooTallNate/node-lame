@@ -58,6 +58,15 @@ Handle<Value> node_lame_close (const Arguments& args) {
   return Undefined();
 }
 
+void gfp_weak_callback (Persistent<Value> wrapper, void *arg) {
+  printf("gfp_weak_callback()\n");
+
+  HandleScope scope;
+  lame_global_flags *gfp = (lame_global_flags *)arg;
+  lame_close(gfp);
+  wrapper.Dispose();
+}
+
 
 /* malloc()'s a `lame_t` struct and returns it to JS land */
 Handle<Value> node_lame_init (const Arguments& args) {
@@ -70,8 +79,9 @@ Handle<Value> node_lame_init (const Arguments& args) {
   // TODO: Move to it's own binding function
   lame_set_write_id3tag_automatic(gfp, 0);
 
-  Local<Object> wrapper = gfpClass->NewInstance();
+  Persistent<Object> wrapper = Persistent<Object>::New(gfpClass->NewInstance());
   wrapper->SetPointerInInternalField(0, gfp);
+  wrapper.MakeWeak(gfp, gfp_weak_callback);
 
   return scope.Close(wrapper);
 }
