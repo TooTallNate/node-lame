@@ -20,15 +20,15 @@ $ npm install lame
 Example
 -------
 
-Here's an example of using `node-lame` to decode an MP3 file to raw PCM data and
-pipe that to `process.stdout`:
+Here's an example of using `node-lame` to encode some raw PCM data coming from
+`process.stdin` to an MP3 file that gets piped to `process.stdout`:
 
 ``` javascript
 var fs = require('fs')
   , lame = require('lame')
 
-// Create the Decoder instance
-var decoder = lame.createDecoder({
+// Create the Encoder instance
+var encoder = lame.createEncoder({
     channels: 2           // 2 channels (left and right)
   , signed: true          // Signed data values
   , sampleSize: 16        // 16-bit samples
@@ -36,11 +36,11 @@ var decoder = lame.createDecoder({
   , endianness: 'little'  // Little-endian samples
 });
 
-// The decoder should have an MP3 file written to it
-fs.createReadStream('/some/audio/file.mp3').pipe(decoder);
+// Raw PCM data from stdin gets piped into the encoder.
+process.stdin.pipe(encoder);
 
-// Raw PCM data gets fed to stdout. play the stream with `ffplay` or somethin'
-decoder.pipe(process.stdout);
+// The generated MP3 file gets piped to stdout.
+encoder.pipe(process.stdout);
 ```
 
 
