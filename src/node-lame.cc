@@ -206,6 +206,21 @@ Handle<Value> node_lame_set_brate (const Arguments& args) {
 }
 
 
+/* lame_get_decode_only() */
+Handle<Value> node_lame_get_decode_only (const Arguments& args) {
+  UNWRAP_GFP;
+  return scope.Close(Integer::New(lame_get_decode_only(gfp)));
+}
+
+
+/* lame_set_decode_only() */
+Handle<Value> node_lame_set_decode_only (const Arguments& args) {
+  UNWRAP_GFP;
+  int val = args[1]->Int32Value();
+  return scope.Close(Integer::New(lame_set_decode_only(gfp, val)));
+}
+
+
 /* lame_get_disable_reservoir() */
 Handle<Value> node_lame_get_disable_reservoir (const Arguments& args) {
   UNWRAP_GFP;
@@ -390,6 +405,8 @@ void Initialize(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_encode_flush_nogap", node_lame_encode_flush_nogap);
   NODE_SET_METHOD(target, "lame_get_brate", node_lame_get_brate);
   NODE_SET_METHOD(target, "lame_set_brate", node_lame_set_brate);
+  NODE_SET_METHOD(target, "lame_get_decode_only", node_lame_get_decode_only);
+  NODE_SET_METHOD(target, "lame_set_decode_only", node_lame_set_decode_only);
   NODE_SET_METHOD(target, "lame_get_disable_reservoir", node_lame_get_disable_reservoir);
   NODE_SET_METHOD(target, "lame_set_disable_reservoir", node_lame_set_disable_reservoir);
   NODE_SET_METHOD(target, "lame_get_framesize", node_lame_get_framesize);
