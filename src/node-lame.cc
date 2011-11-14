@@ -17,6 +17,7 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
+#include <node_version.h>
 #include <lame/lame.h>
 
 using namespace v8;
@@ -28,6 +29,28 @@ namespace {
   HandleScope scope; \
   Local<Object> wrapper = args[0]->ToObject(); \
   lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0); \
+
+/* Node Thread Pool version compat */
+#if NODE_VERSION_AT_LEAST(0, 6, 0)
+  #define BEGIN_ASYNC(data, async, after) \
+    uv_work_t *req = new uv_work_t; \
+    req->data = data; \
+    uv_queue_work(uv_default_loop(), req, async, after);
+  typedef void async_rtn;
+  #define RETURN_ASYNC;
+#elif NODE_VERSION_AT_LEAST(0, 5, 4)
+  #define BEGIN_ASYNC(data, async, after) \
+    eio_custom(async, EIO_PRI_DEFAULT, after, data);
+  typedef void async_rtn;
+  typedef eio_req uv_work_t;
+  #define RETURN_ASYNC;
+#else
+  #define BEGIN_ASYNC(data, async, after) \
+    eio_custom(async, EIO_PRI_DEFAULT, after, data);
+  typedef int async_rtn;
+  typedef eio_req uv_work_t;
+  #define RETURN_ASYNC return 0;
+#endif
 
 
 /* Wrapper ObjectTemplate to hold `lame_t` instances */
@@ -87,7 +110,7 @@ Handle<Value> node_lame_init (const Arguments& args) {
 }
 
 /* encode a buffer on the thread pool. */
-void
+async_rtn
 EIO_encode_buffer_interleaved (uv_work_t *req) {
   encode_req *r = (encode_req *)req->data;
   r->rtn = lame_encode_buffer_interleaved(
@@ -97,9 +120,10 @@ EIO_encode_buffer_interleaved (uv_work_t *req) {
     r->output,
     r->output_size
   );
+  RETURN_ASYNC;
 }
 
-void
+async_rtn
 EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
   HandleScope scope;
 
@@ -119,6 +143,7 @@ EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
   r->callback.Dispose();
   delete r;
   delete req;
+  RETURN_ASYNC;
 }
 
 
@@ -145,17 +170,12 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
   request->output_size = output_size;
   request->callback = Persistent<Function>::New(Local<Function>::Cast(args[6]));
 
-  uv_work_t *req = new uv_work_t();
-  req->data = request;
-  uv_queue_work(uv_default_loop(),
-                req,
-                EIO_encode_buffer_interleaved,
-                EIO_encode_buffer_interleaved_AFTER);
+  BEGIN_ASYNC(request, EIO_encode_buffer_interleaved, EIO_encode_buffer_interleaved_AFTER);
   return Undefined();
 }
 
 
-void
+async_rtn
 EIO_encode_flush_nogap (uv_work_t *req) {
   encode_req *r = (encode_req *)req->data;
   r->rtn = lame_encode_flush_nogap(
@@ -163,6 +183,7 @@ EIO_encode_flush_nogap (uv_work_t *req) {
     r->output,
     r->output_size
   );
+  RETURN_ASYNC;
 }
 
 /* lame_encode_flush_nogap() */
@@ -181,12 +202,7 @@ Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
   r->output_size = output_size;
   r->callback = Persistent<Function>::New(Local<Function>::Cast(args[4]));
 
-  uv_work_t *req = new uv_work_t();
-  req->data = r;
-  uv_queue_work(uv_default_loop(),
-                req,
-                EIO_encode_flush_nogap,
-                EIO_encode_buffer_interleaved_AFTER);
+  BEGIN_ASYNC(r, EIO_encode_flush_nogap, EIO_encode_buffer_interleaved_AFTER);
   return Undefined();
 }
 
