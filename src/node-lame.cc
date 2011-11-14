@@ -387,15 +387,24 @@ void Initialize(Handle<Object> target) {
   // vbr_mode_e
   target->Set(String::New("vbr_off"), Integer::New(vbr_off), readonlydontdelete);
   target->Set(String::New("vbr_mt"), Integer::New(vbr_mt), readonlydontdelete);
-  target->Set(String::New("vbr_rh"), Integer::New(vbr_rh), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
-  target->Set(String::New("vbr_abr"), Integer::New(vbr_abr), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
-  target->Set(String::New("vbr_mtrh"), Integer::New(vbr_mtrh), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
-  target->Set(String::New("vbr_default"), Integer::New(vbr_default), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("vbr_rh"), Integer::New(vbr_rh), readonlydontdelete);
+  target->Set(String::New("vbr_abr"), Integer::New(vbr_abr), readonlydontdelete);
+  target->Set(String::New("vbr_mtrh"), Integer::New(vbr_mtrh), readonlydontdelete);
+  target->Set(String::New("vbr_default"), Integer::New(vbr_default), readonlydontdelete);
+  // MPEG_mode_e
+  target->Set(String::New("STEREO"), Integer::New(STEREO), readonlydontdelete);
+  target->Set(String::New("JOINT_STEREO"), Integer::New(JOINT_STEREO), readonlydontdelete);
+  target->Set(String::New("MONO"), Integer::New(MONO), readonlydontdelete);
+  target->Set(String::New("NOT_SET"), Integer::New(NOT_SET), readonlydontdelete);
+  // Padding_type_e
+  target->Set(String::New("PAD_NO"), Integer::New(PAD_NO), readonlydontdelete);
+  target->Set(String::New("PAD_ALL"), Integer::New(PAD_ALL), readonlydontdelete);
+  target->Set(String::New("PAD_ADJUST"), Integer::New(PAD_ADJUST), readonlydontdelete);
 
   // Maximum size of an album art
-  target->Set(String::New("MAXALBUMART"), Integer::New(LAME_MAXALBUMART), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("MAXALBUMART"), Integer::New(LAME_MAXALBUMART), readonlydontdelete);
   // This is deprecated I think...
-  target->Set(String::New("MAXMP3BUFFER"), Integer::New(LAME_MAXMP3BUFFER), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::New("MAXMP3BUFFER"), Integer::New(LAME_MAXMP3BUFFER), readonlydontdelete);
 
 
   // Functions
