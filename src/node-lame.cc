@@ -90,8 +90,6 @@ Handle<Value> node_lame_close (const Arguments& args) {
 }
 
 void gfp_weak_callback (Persistent<Value> wrapper, void *arg) {
-  printf("gfp_weak_callback()\n");
-
   HandleScope scope;
   lame_global_flags *gfp = (lame_global_flags *)arg;
   lame_close(gfp);
