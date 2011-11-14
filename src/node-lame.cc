@@ -38,18 +38,26 @@ namespace {
     uv_queue_work(uv_default_loop(), req, async, after);
   typedef void async_rtn;
   #define RETURN_ASYNC;
+  #define RETURN_ASYNC_AFTER delete req;
 #elif NODE_VERSION_AT_LEAST(0, 5, 4)
   #define BEGIN_ASYNC(data, async, after) \
+    ev_ref(EV_DEFAULT_UC); \
     eio_custom(async, EIO_PRI_DEFAULT, after, data);
   typedef void async_rtn;
   typedef eio_req uv_work_t;
   #define RETURN_ASYNC;
+  #define RETURN_ASYNC_AFTER \
+    ev_unref(EV_DEFAULT_UC);
 #else
   #define BEGIN_ASYNC(data, async, after) \
+    ev_ref(EV_DEFAULT_UC); \
     eio_custom(async, EIO_PRI_DEFAULT, after, data);
   typedef int async_rtn;
   typedef eio_req uv_work_t;
   #define RETURN_ASYNC return 0;
+  #define RETURN_ASYNC_AFTER \
+    ev_unref(EV_DEFAULT_UC); \
+    RETURN_ASYNC;
 #endif
 
 
@@ -142,8 +150,7 @@ EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
   // cleanup
   r->callback.Dispose();
   delete r;
-  delete req;
-  RETURN_ASYNC;
+  RETURN_ASYNC_AFTER;
 }
 
 
