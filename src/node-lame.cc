@@ -31,23 +31,14 @@ namespace {
   lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0); \
 
 /* Node Thread Pool version compat */
-#if NODE_VERSION_AT_LEAST(0, 6, 0)
-  #define BEGIN_ASYNC(data, async, after) \
-    uv_work_t *req = new uv_work_t; \
-    req->data = data; \
-    uv_queue_work(uv_default_loop(), req, async, after);
+#if NODE_VERSION_AT_LEAST(0, 5, 6)
+  #define BEGIN_ASYNC(_data, async, after) \
+    uv_work_t *_req = new uv_work_t; \
+    _req->data = _data; \
+    uv_queue_work(uv_default_loop(), _req, async, after);
   typedef void async_rtn;
-  #define RETURN_ASYNC;
+  #define RETURN_ASYNC {};
   #define RETURN_ASYNC_AFTER delete req;
-#elif NODE_VERSION_AT_LEAST(0, 5, 4)
-  #define BEGIN_ASYNC(data, async, after) \
-    ev_ref(EV_DEFAULT_UC); \
-    eio_custom(async, EIO_PRI_DEFAULT, after, data);
-  typedef void async_rtn;
-  typedef eio_req uv_work_t;
-  #define RETURN_ASYNC;
-  #define RETURN_ASYNC_AFTER \
-    ev_unref(EV_DEFAULT_UC);
 #else
   #define BEGIN_ASYNC(data, async, after) \
     ev_ref(EV_DEFAULT_UC); \
