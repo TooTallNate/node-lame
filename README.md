@@ -10,7 +10,14 @@ provide an `Encoder` and `Decoder` class to NodeJS.
 Installation
 ------------
 
-Install with `npm`:
+First you must have the lame dev files installed (`lame.h`). On OS X with
+Homebrew, this is a simple as:
+
+``` bash
+$ brew install lame
+```
+
+Now we can, install with `npm`:
 
 ``` bash
 $ npm install lame
