@@ -12,9 +12,12 @@ def configure(ctx):
   ctx.check_cxx(lib="mp3lame")
   ctx.check_cxx(header_name='lame/lame.h', mandatory="True")
 
+  ctx.check_cxx(lib="mpg123")
+  ctx.check_cxx(header_name='mpg123.h', mandatory="True")
+
 def build(ctx):
   t = ctx.new_task_gen('cxx', 'shlib', 'node_addon')
   t.cxxflags = ["-D_FILE_OFFSET_BITS=64", "-D_LARGEFILE_SOURCE"]
   t.target = 'nodelame'
   t.source = 'src/node-lame.cc'
-  t.uselib = 'MP3LAME'
+  t.uselib = 'MP3LAME MPG123'
