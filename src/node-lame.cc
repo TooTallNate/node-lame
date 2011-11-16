@@ -17,8 +17,9 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
-#include <node_version.h>
 #include <lame/lame.h>
+
+#include "node_async_shim.h"
 
 using namespace v8;
 using namespace node;
@@ -29,27 +30,6 @@ namespace {
   HandleScope scope; \
   Local<Object> wrapper = args[0]->ToObject(); \
   lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0); \
-
-/* Node Thread Pool version compat */
-#if NODE_VERSION_AT_LEAST(0, 5, 6)
-  #define BEGIN_ASYNC(_data, async, after) \
-    uv_work_t *_req = new uv_work_t; \
-    _req->data = _data; \
-    uv_queue_work(uv_default_loop(), _req, async, after);
-  typedef void async_rtn;
-  #define RETURN_ASYNC {};
-  #define RETURN_ASYNC_AFTER delete req;
-#else
-  #define BEGIN_ASYNC(data, async, after) \
-    ev_ref(EV_DEFAULT_UC); \
-    eio_custom(async, EIO_PRI_DEFAULT, after, data);
-  typedef int async_rtn;
-  typedef eio_req uv_work_t;
-  #define RETURN_ASYNC return 0;
-  #define RETURN_ASYNC_AFTER \
-    ev_unref(EV_DEFAULT_UC); \
-    RETURN_ASYNC;
-#endif
 
 
 /* Wrapper ObjectTemplate to hold `lame_t` instances */
