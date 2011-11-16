@@ -34,6 +34,13 @@ Handle<Value> node_mpg123_exit (const Arguments& args) {
   return Undefined();
 }
 
+Handle<Value> node_mpg123_new (const Arguments& args) {
+  HandleScope scope;
+  int error = 0;
+  mpg123_handle *mh = mpg123_new(NULL, &error);
+  return scope.Close(Integer::New(error));
+}
+
 Handle<Value> node_mpg123_supported_decoders (const Arguments& args) {
   HandleScope scope;
   const char **decoders = mpg123_supported_decoders();
@@ -63,6 +70,7 @@ void InitMPG123(Handle<Object> target) {
 
   NODE_SET_METHOD(target, "mpg123_init", node_mpg123_init);
   NODE_SET_METHOD(target, "mpg123_exit", node_mpg123_exit);
+  NODE_SET_METHOD(target, "mpg123_new", node_mpg123_new);
   NODE_SET_METHOD(target, "mpg123_decoders", node_mpg123_decoders);
   NODE_SET_METHOD(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
 }
