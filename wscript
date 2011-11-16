@@ -18,6 +18,6 @@ def configure(ctx):
 def build(ctx):
   t = ctx.new_task_gen('cxx', 'shlib', 'node_addon')
   t.cxxflags = ["-D_FILE_OFFSET_BITS=64", "-D_LARGEFILE_SOURCE"]
-  t.target = 'nodelame'
-  t.source = 'src/node-lame.cc'
+  t.target = 'bindings'
+  t.source = 'src/bindings.cc src/node_lame.cc src/node_mpg123.cc'
   t.uselib = 'MP3LAME MPG123'

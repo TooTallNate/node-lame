@@ -24,7 +24,7 @@
 using namespace v8;
 using namespace node;
 
-namespace {
+namespace nodelame {
 
 #define UNWRAP_GFP \
   HandleScope scope; \
@@ -368,7 +368,7 @@ Handle<Value> node_lame_print_config (const Arguments& args) {
 }
 
 
-void Initialize(Handle<Object> target) {
+void InitLame(Handle<Object> target) {
   HandleScope scope;
 
   gfpClass = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
@@ -430,6 +430,4 @@ void Initialize(Handle<Object> target) {
 
 }
 
-} // anonymous namespace
-
-NODE_MODULE(nodelame, Initialize);
+} // nodelame namespace
