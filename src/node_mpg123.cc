@@ -34,6 +34,18 @@ Handle<Value> node_mpg123_exit (const Arguments& args) {
   return Undefined();
 }
 
+Handle<Value> node_mpg123_supported_decoders (const Arguments& args) {
+  HandleScope scope;
+  const char **decoders = mpg123_supported_decoders();
+  int i = 0;
+  Handle<Array> rtn = Array::New();
+  while (*decoders != NULL) {
+    rtn->Set(Integer::New(i++), String::New(*decoders));
+    decoders++;
+  }
+  return scope.Close(rtn);
+}
+
 Handle<Value> node_mpg123_decoders (const Arguments& args) {
   HandleScope scope;
   const char **decoders = mpg123_decoders();
@@ -52,6 +64,7 @@ void InitMPG123(Handle<Object> target) {
   NODE_SET_METHOD(target, "mpg123_init", node_mpg123_init);
   NODE_SET_METHOD(target, "mpg123_exit", node_mpg123_exit);
   NODE_SET_METHOD(target, "mpg123_decoders", node_mpg123_decoders);
+  NODE_SET_METHOD(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
 }
 
 } // nodelame namespace
