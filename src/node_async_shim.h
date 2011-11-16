@@ -24,7 +24,7 @@
     _req->data = _data; \
     uv_queue_work(uv_default_loop(), _req, async, after);
   typedef void async_rtn;
-  #define RETURN_ASYNC {};
+  #define RETURN_ASYNC
   #define RETURN_ASYNC_AFTER delete req;
 #else
   #define BEGIN_ASYNC(data, async, after) \
