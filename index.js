@@ -8,6 +8,8 @@ r('./lib/encoder');
 r('./lib/decoder');
 r('./lib/parser');
 
+exports.bindings = require('./lib/bindings');
+
 /**
  * Require a module and copy all it's exports onto the module's exports.
  */

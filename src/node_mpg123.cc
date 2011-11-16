@@ -16,15 +16,29 @@
 
 #include <v8.h>
 #include <node.h>
+#include <mpg123.h>
 
 using namespace v8;
 using namespace node;
 
 namespace nodelame {
 
+Handle<Value> node_mpg123_init (const Arguments& args) {
+  HandleScope scope;
+  return scope.Close(Integer::New(mpg123_init()));
+}
+
+Handle<Value> node_mpg123_exit (const Arguments& args) {
+  HandleScope scope;
+  mpg123_exit();
+  return Undefined();
+}
+
 void InitMPG123(Handle<Object> target) {
   HandleScope scope;
 
+  NODE_SET_METHOD(target, "mpg123_init", node_mpg123_init);
+  NODE_SET_METHOD(target, "mpg123_exit", node_mpg123_exit);
 }
 
 } // nodelame namespace
