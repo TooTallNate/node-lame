@@ -10,14 +10,23 @@ provide an `Encoder` and `Decoder` class to NodeJS.
 Installation
 ------------
 
-First you must have the lame dev files installed (`lame.h`). On OS X with
-Homebrew, this is a simple as:
+First you must have the lame dev files installed (`lame.h`) and the mpg123 dev
+files installed (`mpg123.h`).
+
+On OS X with Homebrew, this is a simple as:
 
 ``` bash
-$ brew install lame
+$ brew install lame mpg123
 ```
 
-Now we can, install with `npm`:
+Or on Ubuntu, try this:
+
+``` bash
+$ apt-get install libmp3lame-dev libmpg123-dev
+```
+
+Now that the native libraries are installed, we can compile and install
+`node-lame` using `npm`:
 
 ``` bash
 $ npm install lame
