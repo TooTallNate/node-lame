@@ -37,6 +37,13 @@ Handle<Value> node_mpg123_exit (const Arguments& args) {
   return Undefined();
 }
 
+void mh_weak_callback (Persistent<Value> wrapper, void *arg) {
+  HandleScope scope;
+  mpg123_handle *mh = (mpg123_handle *)arg;
+  mpg123_delete(mh);
+  wrapper.Dispose();
+}
+
 Handle<Value> node_mpg123_new (const Arguments& args) {
   HandleScope scope;
   int error = 0;
@@ -46,6 +53,7 @@ Handle<Value> node_mpg123_new (const Arguments& args) {
   if (error == MPG123_OK) {
     Persistent<Object> o = Persistent<Object>::New(mhClass->NewInstance());
     o->SetPointerInInternalField(0, mh);
+    o.MakeWeak(mh, mh_weak_callback);
     rtn = o;
   } else {
     rtn = Integer::New(error);
