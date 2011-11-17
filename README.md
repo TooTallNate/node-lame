@@ -80,6 +80,7 @@ written to it, and emits events as the different structures of the MP3 file are
 encountered:
 
   * `id3v2` event - fired one time when the ID3v2 data at the beginning of the MP3 file has been parsed. A single `Buffer` argument is passed to the callbacks.
+  * `header` events - fired multiple times as each MP3 frame header gets written. A single `Buffer` argument is passed that is the header.
   * `frame` events - fired multiple times as each complete MP3 frame gets written. A single `Buffer` argument is passed that is a complete MP3 frame.
   * `id3v1` event - fired one time when the ID3v1 data at the end of the MP3 file has been parsed. A single `Buffer` argument is passed that is the ID3 info.
   * `end` event - fired one time when then end of the MP3 file is encountered.
