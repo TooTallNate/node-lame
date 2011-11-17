@@ -23,6 +23,9 @@ using namespace node;
 
 namespace nodelame {
 
+/* Wrapper ObjectTemplate to hold `mpg123_handle` instances */
+Persistent<ObjectTemplate> mhClass;
+
 Handle<Value> node_mpg123_init (const Arguments& args) {
   HandleScope scope;
   return scope.Close(Integer::New(mpg123_init()));
@@ -38,7 +41,16 @@ Handle<Value> node_mpg123_new (const Arguments& args) {
   HandleScope scope;
   int error = 0;
   mpg123_handle *mh = mpg123_new(NULL, &error);
-  return scope.Close(Integer::New(error));
+
+  Handle<Value> rtn;
+  if (error == MPG123_OK) {
+    Persistent<Object> o = Persistent<Object>::New(mhClass->NewInstance());
+    o->SetPointerInInternalField(0, mh);
+    rtn = o;
+  } else {
+    rtn = Integer::New(error);
+  }
+  return scope.Close(rtn);
 }
 
 Handle<Value> node_mpg123_supported_decoders (const Arguments& args) {
@@ -67,6 +79,9 @@ Handle<Value> node_mpg123_decoders (const Arguments& args) {
 
 void InitMPG123(Handle<Object> target) {
   HandleScope scope;
+
+  mhClass = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
+  mhClass->SetInternalFieldCount(1);
 
   NODE_SET_METHOD(target, "mpg123_init", node_mpg123_init);
   NODE_SET_METHOD(target, "mpg123_exit", node_mpg123_exit);
