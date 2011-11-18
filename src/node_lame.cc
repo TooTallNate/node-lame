@@ -29,7 +29,7 @@ namespace nodelame {
 #define UNWRAP_GFP \
   HandleScope scope; \
   Local<Object> wrapper = args[0]->ToObject(); \
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0); \
+  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
 
 
 /* Wrapper ObjectTemplate to hold `lame_t` instances */
@@ -74,6 +74,7 @@ Handle<Value> node_lame_init (const Arguments& args) {
   HandleScope scope;
 
   lame_global_flags *gfp = lame_init();
+  // TODO: Check for NULL here
 
   // disable id3v2 in the encode stream;
   // user must call lame_getid3v2_tag() manually
