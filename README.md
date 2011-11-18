@@ -1,6 +1,6 @@
 node-lame
 =========
-### NodeJS native bindings to libmp3lame
+### NodeJS native bindings to libmp3lame & libmpg123
 
 For all your async streaming MP3 encoding/decoding needs, there's `node-lame`!
 This module hooks into libmp3lame, the library that the `lame` command uses, to
@@ -13,7 +13,7 @@ Installation
 First you must have the lame dev files installed (`lame.h`) and the mpg123 dev
 files installed (`mpg123.h`).
 
-On OS X with Homebrew, this is a simple as:
+On OS X with Homebrew, this is as simple as:
 
 ``` bash
 $ brew install lame mpg123
@@ -24,6 +24,8 @@ Or on Ubuntu, try this:
 ``` bash
 $ apt-get install libmp3lame-dev libmpg123-dev
 ```
+
+Of course you can install those packages from source yourself if you prefer.
 
 Now that the native libraries are installed, we can compile and install
 `node-lame` using `npm`:
