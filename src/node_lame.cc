@@ -376,29 +376,29 @@ void InitLame(Handle<Object> target) {
   gfpClass = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
   gfpClass->SetInternalFieldCount(1);
 
-  // Constants
-  PropertyAttribute readonlydontdelete = static_cast<PropertyAttribute>(ReadOnly|DontDelete);
-  // vbr_mode_e
-  target->Set(String::NewSymbol("vbr_off"), Integer::New(vbr_off), readonlydontdelete);
-  target->Set(String::NewSymbol("vbr_mt"), Integer::New(vbr_mt), readonlydontdelete);
-  target->Set(String::NewSymbol("vbr_rh"), Integer::New(vbr_rh), readonlydontdelete);
-  target->Set(String::NewSymbol("vbr_abr"), Integer::New(vbr_abr), readonlydontdelete);
-  target->Set(String::NewSymbol("vbr_mtrh"), Integer::New(vbr_mtrh), readonlydontdelete);
-  target->Set(String::NewSymbol("vbr_default"), Integer::New(vbr_default), readonlydontdelete);
-  // MPEG_mode_e
-  target->Set(String::NewSymbol("STEREO"), Integer::New(STEREO), readonlydontdelete);
-  target->Set(String::NewSymbol("JOINT_STEREO"), Integer::New(JOINT_STEREO), readonlydontdelete);
-  target->Set(String::NewSymbol("MONO"), Integer::New(MONO), readonlydontdelete);
-  target->Set(String::NewSymbol("NOT_SET"), Integer::New(NOT_SET), readonlydontdelete);
-  // Padding_type_e
-  target->Set(String::NewSymbol("PAD_NO"), Integer::New(PAD_NO), readonlydontdelete);
-  target->Set(String::NewSymbol("PAD_ALL"), Integer::New(PAD_ALL), readonlydontdelete);
-  target->Set(String::NewSymbol("PAD_ADJUST"), Integer::New(PAD_ADJUST), readonlydontdelete);
 
+#define CONST_INT(value) \
+  target->Set(String::NewSymbol(#value), Integer::New(value), \
+      static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+
+  // vbr_mode_e
+  CONST_INT(vbr_off);
+  CONST_INT(vbr_mt);
+  CONST_INT(vbr_rh);
+  CONST_INT(vbr_abr);
+  CONST_INT(vbr_mtrh);
+  CONST_INT(vbr_default);
+  // MPEG_mode_e
+  CONST_INT(STEREO);
+  CONST_INT(JOINT_STEREO);
+  CONST_INT(MONO);
+  CONST_INT(NOT_SET);
+  // Padding_type_e
+  CONST_INT(PAD_NO);
+  CONST_INT(PAD_ALL);
+  CONST_INT(PAD_ADJUST);
   // Maximum size of an album art
-  target->Set(String::NewSymbol("MAXALBUMART"), Integer::New(LAME_MAXALBUMART), readonlydontdelete);
-  // This is deprecated I think...
-  target->Set(String::NewSymbol("MAXMP3BUFFER"), Integer::New(LAME_MAXMP3BUFFER), readonlydontdelete);
+  CONST_INT(LAME_MAXALBUMART);
 
 
   // Functions
