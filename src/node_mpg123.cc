@@ -67,6 +67,12 @@ Handle<Value> node_mpg123_new (const Arguments& args) {
   return scope.Close(rtn);
 }
 
+Handle<Value> node_mpg123_current_decoder (const Arguments& args) {
+  UNWRAP_MH;
+  const char *decoder = mpg123_current_decoder(mh);
+  return scope.Close(String::New(decoder));
+}
+
 Handle<Value> node_mpg123_supported_decoders (const Arguments& args) {
   HandleScope scope;
   const char **decoders = mpg123_supported_decoders();
@@ -180,7 +186,8 @@ void InitMPG123(Handle<Object> target) {
   CONST_INT(MPG123_LSEEK_FAILED); /**< Low-level seek failed. */
   CONST_INT(MPG123_BAD_CUSTOM_IO); /**< Custom I/O not prepared. */
   CONST_INT(MPG123_LFS_OVERFLOW); /**< Offset value overflow during translation of large file API calls -- your client program cannot handle that large file. */
-  // mpg123_channelcount
+
+  /* mpg123_channelcount */
   CONST_INT(MPG123_MONO);
   CONST_INT(MPG123_STEREO);
 
@@ -198,6 +205,7 @@ void InitMPG123(Handle<Object> target) {
   NODE_SET_METHOD(target, "mpg123_exit", node_mpg123_exit);
   NODE_SET_METHOD(target, "mpg123_new", node_mpg123_new);
   NODE_SET_METHOD(target, "mpg123_decoders", node_mpg123_decoders);
+  NODE_SET_METHOD(target, "mpg123_current_decoder", node_mpg123_current_decoder);
   NODE_SET_METHOD(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
   NODE_SET_METHOD(target, "mpg123_open_feed", node_mpg123_open_feed);
   NODE_SET_METHOD(target, "mpg123_decode", node_mpg123_decode);
