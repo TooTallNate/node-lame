@@ -50,8 +50,11 @@ void mh_weak_callback (Persistent<Value> wrapper, void *arg) {
   wrapper.Dispose();
 }
 
+// TODO: Make async
 Handle<Value> node_mpg123_new (const Arguments& args) {
   HandleScope scope;
+
+  // TODO: Accept an input decoder String
   int error = 0;
   mpg123_handle *mh = mpg123_new(NULL, &error);
 
