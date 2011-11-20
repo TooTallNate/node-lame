@@ -112,7 +112,10 @@ Handle<Value> node_mpg123_decode (const Arguments& args) {
   UNWRAP_MH;
 
   // input MP3 data
-  const unsigned char *input = (const unsigned char *)Buffer::Data(args[1]->ToObject());
+  const unsigned char *input = NULL;
+  if (!args[1]->IsNull()) {
+    input = (const unsigned char *)Buffer::Data(args[1]->ToObject());
+  }
   size_t insize = args[2]->Int32Value();
 
   // the output buffer
@@ -127,6 +130,18 @@ Handle<Value> node_mpg123_decode (const Arguments& args) {
   Local<Object> rtn = Object::New();
   rtn->Set(String::NewSymbol("ret"), Integer::New(ret));
   rtn->Set(String::NewSymbol("size"), Integer::New(size));
+
+  if (ret == MPG123_NEW_FORMAT) {
+    printf("got New Format\n");
+    long rate;
+    int channels;
+    int encoding;
+    mpg123_getformat(mh, &rate, &channels, &encoding);
+    printf("rate: %lu\n", rate);
+    printf("channels: %d\n", channels);
+    printf("encoding: %d\n", encoding);
+  }
+
   return scope.Close(rtn);
 }
 
