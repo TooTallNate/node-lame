@@ -132,14 +132,13 @@ Handle<Value> node_mpg123_decode (const Arguments& args) {
   rtn->Set(String::NewSymbol("size"), Integer::New(size));
 
   if (ret == MPG123_NEW_FORMAT) {
-    printf("got New Format\n");
     long rate;
     int channels;
     int encoding;
     mpg123_getformat(mh, &rate, &channels, &encoding);
-    printf("rate: %lu\n", rate);
-    printf("channels: %d\n", channels);
-    printf("encoding: %d\n", encoding);
+    rtn->Set(String::NewSymbol("rate"), Integer::New(rate));
+    rtn->Set(String::NewSymbol("channels"), Integer::New(channels));
+    rtn->Set(String::NewSymbol("encoding"), Integer::New(encoding));
   }
 
   return scope.Close(rtn);
