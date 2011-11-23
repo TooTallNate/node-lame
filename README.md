@@ -67,6 +67,7 @@ API
 
 ### Decoder class
 
+**Note: Decoder class is still a work-in-progress**
 The `Decoder` class is a `Stream` subclass that accepts MP3 data written to it,
 and emits raw PCM as `data` events.
 
