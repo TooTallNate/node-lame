@@ -244,7 +244,8 @@ Handle<Value> node_lame_get_framesize (const Arguments& args) {
 }
 
 
-/* lame_get_id3v1_tag()
+/**
+ * lame_get_id3v1_tag()
  * Must be called *after* lame_encode_flush()
  * TODO: Make async
  */
@@ -260,7 +261,8 @@ Handle<Value> node_lame_get_id3v1_tag (const Arguments& args) {
 }
 
 
-/* lame_get_id3v2_tag()
+/**
+ * lame_get_id3v2_tag()
  * Must be called *before* lame_init_params()
  * TODO: Make async
  */
