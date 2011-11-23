@@ -19,6 +19,8 @@
 #include <node_buffer.h>
 #include <mpg123.h>
 
+#include "node_async_shim.h"
+
 using namespace v8;
 using namespace node;
 
@@ -31,6 +33,24 @@ namespace nodelame {
 
 /* Wrapper ObjectTemplate to hold `mpg123_handle` instances */
 Persistent<ObjectTemplate> mhClass;
+
+/* struct used for async decoding */
+struct decode_req {
+  mpg123_handle *mh;
+  const unsigned char *input;
+  size_t insize;
+  unsigned char *output;
+  size_t outsize;
+  size_t bytesWritten;
+  int ret;
+  Persistent<Function> callback;
+};
+
+struct new_format {
+  long rate;
+  int channels;
+  int encoding;
+};
 
 Handle<Value> node_mpg123_init (const Arguments& args) {
   HandleScope scope;
