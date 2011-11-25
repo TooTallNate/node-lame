@@ -3,16 +3,17 @@ var lame = require('../')
   , filename = process.argv[2] || __dirname + '/../pigs.f.s16le.acodec.pcm_s16le.ar.44100.ac.2';
 
 var f = fs.createReadStream(filename)
-  , encoder = lame.createEncoder()
+  , encoder = lame.createEncoder();
 
-f.on('data', function (b) {
-  //console.error('file data. %d bytes.', b.length);
-  var flushed = encoder.write(b, afterEncoderWrite);
-  //console.error('flushed?', flushed);
-});
+f.pipe(encoder);
+encoder.pipe(process.stdout);
 
-function afterEncoderWrite () {
-  console.error('afterEncoderWrite()');
+var p = encoder.pause;
+encoder.pause = function () {
+  console.error('pause');
+  p.apply(this, arguments);
 }
 
-encoder.pipe(process.stdout);
+encoder.on('drain', function () {
+  console.error('drain');
+});

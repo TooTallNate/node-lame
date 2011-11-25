@@ -13,13 +13,13 @@ f.pipe(parser);
 
 // emits 'header' events on each MPEG header (start of frame)
 parser.on('header', function (b, meta) {
-  //console.error('header', meta);
+  console.error('header', meta);
   process.stdout.write(b);
 });
 
 // emits 'frame' event for the actual data from each frame
 parser.on('frame', function (b) {
-  //console.error('frame');
+  console.error('frame');
   process.stdout.write(b);
 });
 
