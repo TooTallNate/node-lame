@@ -1,4 +1,7 @@
-/*
+/**
+ * eio_custom() vs. uv_queue_work() file.
+ * Original gist: https://gist.github.com/1368935
+ *
  * Copyright (c) 2011-2012, Nathan Rajlich <nathan@tootallnate.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
