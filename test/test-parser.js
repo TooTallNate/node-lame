@@ -1,12 +1,12 @@
 var id3 = require('id3')
-  , Parser = require('../lib/parser')
+  , lame = require('../')
 
 // Read an MPEG file from stdin
 var f = process.stdin;
 f.resume();
 
 // Create a Parser instance
-var parser = new Parser();
+var parser = lame.createParser();
 
 // pipe stdin to the parser
 f.pipe(parser);
