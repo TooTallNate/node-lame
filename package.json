@@ -6,10 +6,11 @@
   , "repository": { "type": "git", "url": "git://github.com/TooTallNate/node-lame.git" }
   , "main": "./index.js"
   , "dependencies": {
-      "strtok": "0.1.x"
-    }
+      "debug": "*"
+    , "strtok": "0.1.x"
+  }
   , "scripts": {
       "test": "./test/run.sh"
-    }
+  }
   , "engines": { "node": ">= 0.4.0" }
 }
