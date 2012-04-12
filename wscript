@@ -8,6 +8,8 @@ def set_options(ctx):
 def configure(ctx):
   ctx.check_tool('compiler_cxx')
   ctx.check_tool('node_addon')
+  ctx.env.append_value('LINKFLAGS', ['-L/usr/local/lib'])
+  ctx.env.append_value('CXXFLAGS', ['-I/usr/local/include'])
 
   ctx.check_cxx(lib="mp3lame")
   ctx.check_cxx(header_name='lame/lame.h', mandatory="True")
