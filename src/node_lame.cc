@@ -17,7 +17,7 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
-#include <lame/lame.h>
+#include "lame.h"
 
 #include "node_async_shim.h"
 
