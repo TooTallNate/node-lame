@@ -48,6 +48,16 @@
       # platform and arch-specific headers
       'config/<(OS)/<(target_arch)'
     ],
+    'conditions': [
+      ['OS=="win"', {
+        'defines': [
+          'TAKEHIRO_IEEE754_HACK',
+          'FLOAT8=float',
+          'REAL_IS_FLOAT=1',
+          'BS_FORMAT=BINARY',
+        ]
+      }]
+    ],
   },
 
   'targets': [
@@ -118,12 +128,6 @@
           'libmp3lame/vector',
           # platform and arch-specific headers
           'config/<(OS)/<(target_arch)'
-        ],
-        'conditions': [
-          ['OS=="win"', {
-            'defines': [
-            ]
-          }]
         ],
       },
     },
