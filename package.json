@@ -6,7 +6,8 @@
   , "repository": { "type": "git", "url": "git://github.com/TooTallNate/node-lame.git" }
   , "main": "./index.js"
   , "dependencies": {
-      "debug": "*"
+      "bindings": "*"
+    , "debug": "*"
     , "strtok": "0.1.x"
   }
   , "scripts": {
