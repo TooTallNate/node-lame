@@ -48,19 +48,6 @@ Handle<Value> PASTE(node_lame_set_, fn) (const Arguments& args) { \
   return scope.Close(Number::New(output)); \
 }
 
-/*
- * templated get/set functions
- */
-
-typedef int(*intfn)(lame_global_flags *);
-
-template <intfn fn>
-v8::Handle<v8::Value> Test(const v8::Arguments& args) {
-  HandleScope scope;
-  return Undefined();
-  //return Integer::New(i);
-}
-
 
 /* Wrapper ObjectTemplate to hold `lame_t` instances */
 Persistent<ObjectTemplate> gfpClass;
