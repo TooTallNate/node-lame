@@ -28,8 +28,38 @@ namespace nodelame {
 
 #define UNWRAP_GFP \
   HandleScope scope; \
-  Local<Object> wrapper = args[0]->ToObject(); \
-  lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+  lame_global_flags *gfp = NULL; \
+  //Local<Object> wrapper = args[0]->ToObject(); \
+  //lame_global_flags *gfp = (lame_global_flags *)wrapper->GetPointerFromInternalField(0);
+
+#define PASTE2(a, b) a##b
+#define PASTE(a, b) PASTE2(a, b)
+
+#define FN(type, v8type, fn) \
+Handle<Value> PASTE(node_lame_get_, fn) (const Arguments& args) { \
+  UNWRAP_GFP; \
+  type output = PASTE(lame_get_, fn)(gfp); \
+  return scope.Close(Number::New(output)); \
+} \
+Handle<Value> PASTE(node_lame_set_, fn) (const Arguments& args) { \
+  UNWRAP_GFP; \
+  type input = (type)args[0]->PASTE(v8type, Value)(); \
+  int output = PASTE(lame_set_, fn)(gfp, input); \
+  return scope.Close(Number::New(output)); \
+}
+
+/*
+ * templated get/set functions
+ */
+
+typedef int(*intfn)(lame_global_flags *);
+
+template <intfn fn>
+v8::Handle<v8::Value> Test(const v8::Arguments& args) {
+  HandleScope scope;
+  return Undefined();
+  //return Integer::New(i);
+}
 
 
 /* Wrapper ObjectTemplate to hold `lame_t` instances */
@@ -185,64 +215,6 @@ Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
 }
 
 
-/* lame_get_brate() */
-Handle<Value> node_lame_get_brate (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_brate(gfp)));
-}
-
-
-/* lame_set_brate() */
-Handle<Value> node_lame_set_brate (const Arguments& args) {
-  UNWRAP_GFP;
-  int val = args[1]->Int32Value();
-  return scope.Close(Integer::New(lame_set_brate(gfp, val)));
-}
-
-
-/* lame_get_decode_only() */
-Handle<Value> node_lame_get_decode_only (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_decode_only(gfp)));
-}
-
-
-/* lame_set_decode_only() */
-Handle<Value> node_lame_set_decode_only (const Arguments& args) {
-  UNWRAP_GFP;
-  int val = args[1]->Int32Value();
-  return scope.Close(Integer::New(lame_set_decode_only(gfp, val)));
-}
-
-
-/* lame_get_disable_reservoir() */
-Handle<Value> node_lame_get_disable_reservoir (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_disable_reservoir(gfp)));
-}
-
-
-/* lame_set_disable_reservoir() */
-Handle<Value> node_lame_set_disable_reservoir (const Arguments& args) {
-  UNWRAP_GFP;
-  int val = args[1]->Int32Value();
-  return scope.Close(Integer::New(lame_set_disable_reservoir(gfp, val)));
-}
-
-
-/* lame_get_frameNum() */
-Handle<Value> node_lame_get_frameNum (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_frameNum(gfp)));
-}
-
-
-/* lame_get_framesize() */
-Handle<Value> node_lame_get_framesize (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_framesize(gfp)));
-}
-
 
 /**
  * lame_get_id3v1_tag()
@@ -278,74 +250,6 @@ Handle<Value> node_lame_get_id3v2_tag (const Arguments& args) {
 }
 
 
-/* lame_get_in_samplerate(gfp) */
-Handle<Value> node_lame_get_in_samplerate (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_in_samplerate(gfp)));
-}
-
-
-/* lame_set_set_in_samplerate(gfp) */
-Handle<Value> node_lame_set_in_samplerate (const Arguments& args) {
-  UNWRAP_GFP;
-  int val = args[1]->Int32Value();
-  return scope.Close(Integer::New(lame_set_in_samplerate(gfp, val)));
-}
-
-
-/* lame_get_num_channels(gfp) */
-Handle<Value> node_lame_get_num_channels (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_num_channels(gfp)));
-}
-
-
-/* lame_set_num_channels(gfp) */
-Handle<Value> node_lame_set_num_channels (const Arguments& args) {
-  UNWRAP_GFP;
-  int val = args[1]->Int32Value();
-  return scope.Close(Integer::New(lame_set_num_channels(gfp, val)));
-}
-
-
-/* lame_get_out_samplerate(gfp) */
-Handle<Value> node_lame_get_out_samplerate (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_out_samplerate(gfp)));
-}
-
-
-/* lame_set_out_samplerate(gfp) */
-Handle<Value> node_lame_set_out_samplerate (const Arguments& args) {
-  UNWRAP_GFP;
-  int val = args[1]->Int32Value();
-  return scope.Close(Integer::New(lame_set_out_samplerate(gfp, val)));
-}
-
-
-/* lame_get_version(gfp)
-   version  0=MPEG-2  1=MPEG-1  (2=MPEG-2.5)     */
-Handle<Value> node_lame_get_version (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_version(gfp)));
-}
-
-
-/* lame_get_VBR(gfp) */
-Handle<Value> node_lame_get_VBR (const Arguments& args) {
-  UNWRAP_GFP;
-  return scope.Close(Integer::New(lame_get_VBR(gfp)));
-}
-
-
-/* lame_set_VBR(gfp) */
-Handle<Value> node_lame_set_VBR (const Arguments& args) {
-  UNWRAP_GFP;
-  vbr_mode mode = (vbr_mode)args[1]->Int32Value();
-  return scope.Close(Integer::New(lame_set_VBR(gfp, mode)));
-}
-
-
 /* lame_init_params(gfp) */
 Handle<Value> node_lame_init_params (const Arguments& args) {
   UNWRAP_GFP;
@@ -370,6 +274,43 @@ Handle<Value> node_lame_print_config (const Arguments& args) {
   lame_print_config(gfp);
   return Undefined();
 }
+
+// define the node_lame_get/node_lame_set functions
+FN(unsigned long, Number, num_samples);
+FN(int, Int32, in_samplerate);
+FN(int, Int32, num_channels);
+FN(float, Number, scale);
+FN(float, Number, scale_left);
+FN(float, Number, scale_right);
+FN(int, Int32, out_samplerate);
+FN(int, Int32, analysis);
+FN(int, Int32, bWriteVbrTag);
+FN(int, Int32, quality);
+FN(MPEG_mode, Int32, mode);
+
+FN(int, Int32, brate);
+FN(float, Number, compression_ratio);
+FN(int, Int32, copyright);
+FN(int, Int32, original);
+FN(int, Int32, error_protection);
+FN(int, Int32, extension);
+FN(int, Int32, strict_ISO);
+FN(int, Int32, disable_reservoir);
+FN(int, Int32, quant_comp);
+FN(int, Int32, quant_comp_short);
+FN(int, Int32, exp_nspsytune);
+FN(vbr_mode, Int32, VBR);
+FN(int, Int32, VBR_q);
+FN(float, Number, VBR_quality);
+FN(int, Int32, VBR_mean_bitrate_kbps);
+FN(int, Int32, VBR_min_bitrate_kbps);
+FN(int, Int32, VBR_max_bitrate_kbps);
+FN(int, Int32, VBR_hard_min);
+FN(int, Int32, lowpassfreq);
+FN(int, Int32, lowpasswidth);
+FN(int, Int32, highpassfreq);
+FN(int, Int32, highpasswidth);
+// ...
 
 
 void InitLame(Handle<Object> target) {
@@ -408,29 +349,61 @@ void InitLame(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_close", node_lame_close);
   NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
   NODE_SET_METHOD(target, "lame_encode_flush_nogap", node_lame_encode_flush_nogap);
-  NODE_SET_METHOD(target, "lame_get_brate", node_lame_get_brate);
-  NODE_SET_METHOD(target, "lame_set_brate", node_lame_set_brate);
-  NODE_SET_METHOD(target, "lame_get_decode_only", node_lame_get_decode_only);
-  NODE_SET_METHOD(target, "lame_set_decode_only", node_lame_set_decode_only);
-  NODE_SET_METHOD(target, "lame_get_disable_reservoir", node_lame_get_disable_reservoir);
-  NODE_SET_METHOD(target, "lame_set_disable_reservoir", node_lame_set_disable_reservoir);
-  NODE_SET_METHOD(target, "lame_get_framesize", node_lame_get_framesize);
-  NODE_SET_METHOD(target, "lame_get_frameNum", node_lame_get_frameNum);
   NODE_SET_METHOD(target, "lame_get_id3v1_tag", node_lame_get_id3v1_tag);
   NODE_SET_METHOD(target, "lame_get_id3v2_tag", node_lame_get_id3v2_tag);
-  NODE_SET_METHOD(target, "lame_get_in_samplerate", node_lame_get_in_samplerate);
-  NODE_SET_METHOD(target, "lame_set_in_samplerate", node_lame_set_in_samplerate);
-  NODE_SET_METHOD(target, "lame_get_num_channels", node_lame_get_num_channels);
-  NODE_SET_METHOD(target, "lame_set_num_channels", node_lame_set_num_channels);
-  NODE_SET_METHOD(target, "lame_get_out_samplerate", node_lame_get_out_samplerate);
-  NODE_SET_METHOD(target, "lame_set_out_samplerate", node_lame_set_out_samplerate);
-  NODE_SET_METHOD(target, "lame_get_version", node_lame_get_version);
-  NODE_SET_METHOD(target, "lame_get_VBR", node_lame_get_VBR);
-  NODE_SET_METHOD(target, "lame_set_VBR", node_lame_set_VBR);
   NODE_SET_METHOD(target, "lame_init_params", node_lame_init_params);
   NODE_SET_METHOD(target, "lame_print_config", node_lame_print_config);
   NODE_SET_METHOD(target, "lame_print_internals", node_lame_print_internals);
   NODE_SET_METHOD(target, "lame_init", node_lame_init);
+
+  // Get/Set functions
+#define LAME_SET_METHOD(fn) \
+  NODE_SET_METHOD(target, "lame_get_" #fn, PASTE(node_lame_get_, fn)); \
+  NODE_SET_METHOD(target, "lame_set_" #fn, PASTE(node_lame_set_, fn));
+
+  LAME_SET_METHOD(num_samples);
+  LAME_SET_METHOD(in_samplerate);
+  LAME_SET_METHOD(num_channels);
+  LAME_SET_METHOD(scale);
+  LAME_SET_METHOD(scale_left);
+  LAME_SET_METHOD(scale_right);
+  LAME_SET_METHOD(out_samplerate);
+  LAME_SET_METHOD(analysis);
+  LAME_SET_METHOD(bWriteVbrTag);
+  LAME_SET_METHOD(quality);
+  LAME_SET_METHOD(mode);
+
+  LAME_SET_METHOD(brate);
+  LAME_SET_METHOD(compression_ratio);
+  LAME_SET_METHOD(copyright);
+  LAME_SET_METHOD(original);
+  LAME_SET_METHOD(error_protection);
+  LAME_SET_METHOD(extension);
+  LAME_SET_METHOD(strict_ISO);
+  LAME_SET_METHOD(disable_reservoir);
+  LAME_SET_METHOD(quant_comp);
+  LAME_SET_METHOD(quant_comp_short);
+  LAME_SET_METHOD(exp_nspsytune);
+  LAME_SET_METHOD(VBR);
+  LAME_SET_METHOD(VBR_q);
+  LAME_SET_METHOD(VBR_quality);
+  LAME_SET_METHOD(VBR_mean_bitrate_kbps);
+  LAME_SET_METHOD(VBR_min_bitrate_kbps);
+  LAME_SET_METHOD(VBR_max_bitrate_kbps);
+  LAME_SET_METHOD(VBR_hard_min);
+  LAME_SET_METHOD(lowpassfreq);
+  LAME_SET_METHOD(lowpasswidth);
+  LAME_SET_METHOD(highpassfreq);
+  LAME_SET_METHOD(highpasswidth);
+  // ...
+
+  /*
+  NODE_SET_METHOD(target, "lame_get_decode_only", node_lame_get_decode_only);
+  NODE_SET_METHOD(target, "lame_set_decode_only", node_lame_set_decode_only);
+  NODE_SET_METHOD(target, "lame_get_framesize", node_lame_get_framesize);
+  NODE_SET_METHOD(target, "lame_get_frameNum", node_lame_get_frameNum);
+  NODE_SET_METHOD(target, "lame_get_version", node_lame_get_version);
+  */
 
 }
 
