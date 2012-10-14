@@ -42,7 +42,6 @@
     ],
     'include_dirs': [
       'include',
-      'mpglib',
       'libmp3lame',
       'libmp3lame/vector',
       # platform and arch-specific headers
@@ -61,23 +60,6 @@
   },
 
   'targets': [
-
-    # mpglib
-    {
-      'target_name': 'mpgdecoder',
-      'product_prefix': 'lib',
-      'type': 'static_library',
-      'sources': [
-        'mpglib/common.c',
-        'mpglib/dct64_i386.c',
-        'mpglib/decode_i386.c',
-        'mpglib/interface.c',
-        'mpglib/layer1.c',
-        'mpglib/layer2.c',
-        'mpglib/layer3.c',
-        'mpglib/tabinit.c',
-      ],
-    },
 
     # liblamevectorroutines
     {
@@ -114,16 +96,13 @@
         'libmp3lame/util.c',
         'libmp3lame/vbrquantize.c',
         'libmp3lame/version.c',
-        'libmp3lame/mpglib_interface.c',
       ],
       'dependencies': [
         'lamevectorroutines',
-        'mpgdecoder',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           'include',
-          'mpglib',
           'libmp3lame',
           'libmp3lame/vector',
           # platform and arch-specific headers
