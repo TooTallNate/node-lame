@@ -46,12 +46,6 @@ struct decode_req {
   Persistent<Function> callback;
 };
 
-struct new_format {
-  long rate;
-  int channels;
-  int encoding;
-};
-
 Handle<Value> node_mpg123_init (const Arguments& args) {
   HandleScope scope;
   return scope.Close(Integer::New(mpg123_init()));

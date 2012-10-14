@@ -23,13 +23,13 @@ using namespace node;
 namespace nodelame {
 
 void InitLame(Handle<Object>);
-//void InitMPG123(Handle<Object>);
+void InitMPG123(Handle<Object>);
 
 void Initialize(Handle<Object> target) {
   HandleScope scope;
 
   InitLame(target);
-  //InitMPG123(target);
+  InitMPG123(target);
 }
 
 } // nodelame namespace
