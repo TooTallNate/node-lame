@@ -18,9 +18,9 @@ inline static void wrap_pointer_cb(char *data, void *hint) {
  * Wraps "ptr" into a new SlowBuffer instance with size "length".
  */
 
-inline static v8::Handle<v8::Value> WrapPointer(char *ptr, size_t length) {
+inline static v8::Handle<v8::Value> WrapPointer(void *ptr, size_t length) {
   void *user_data = NULL;
-  node::Buffer *buf = node::Buffer::New(ptr, length, wrap_pointer_cb, user_data);
+  node::Buffer *buf = node::Buffer::New((char *)ptr, length, wrap_pointer_cb, user_data);
   return buf->handle_;
 }
 
@@ -28,8 +28,8 @@ inline static v8::Handle<v8::Value> WrapPointer(char *ptr, size_t length) {
  * Wraps "ptr" into a new SlowBuffer instance with length 0.
  */
 
-inline static v8::Handle<v8::Value> WrapPointer(char *ptr) {
-  return WrapPointer(ptr, 0);
+inline static v8::Handle<v8::Value> WrapPointer(void *ptr) {
+  return WrapPointer((char *)ptr, 0);
 }
 
 /*
@@ -37,7 +37,7 @@ inline static v8::Handle<v8::Value> WrapPointer(char *ptr) {
  */
 
 inline static char * UnwrapPointer(v8::Handle<v8::Value> buffer, int64_t offset) {
-  return node::Buffer::Data(buffer.As<Object>()) + offset;
+  return node::Buffer::Data(buffer.As<v8::Object>()) + offset;
 }
 
 /*
@@ -45,6 +45,6 @@ inline static char * UnwrapPointer(v8::Handle<v8::Value> buffer, int64_t offset)
  */
 
 
-inline static char * UnwrapPointer(v8::Handle<v8::Value>) {
-  return node::Buffer::Data(buffer.As<Object>);
+inline static char * UnwrapPointer(v8::Handle<v8::Value> buffer) {
+  return node::Buffer::Data(buffer.As<v8::Object>());
 }

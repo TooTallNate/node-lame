@@ -17,6 +17,7 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
+#include "node_pointer.h"
 
 #include "mpg123.h"
 
@@ -27,14 +28,11 @@ namespace nodelame {
 
 #define UNWRAP_MH \
   HandleScope scope; \
-  Local<Object>wrapper = args[0]->ToObject(); \
-  mpg123_handle *mh = (mpg123_handle *)wrapper->GetPointerFromInternalField(0);
-
-/* Wrapper ObjectTemplate to hold `mpg123_handle` instances */
-Persistent<ObjectTemplate> mhClass;
+  mpg123_handle *mh = reinterpret_cast<mpg123_handle *>(UnwrapPointer(args[0]));
 
 /* struct used for async decoding */
 struct decode_req {
+  uv_work_t req;
   mpg123_handle *mh;
   const unsigned char *input;
   size_t insize;
@@ -56,32 +54,31 @@ Handle<Value> node_mpg123_exit (const Arguments& args) {
   return Undefined();
 }
 
+/*
 void mh_weak_callback (Persistent<Value> wrapper, void *arg) {
   HandleScope scope;
   mpg123_handle *mh = (mpg123_handle *)arg;
   mpg123_delete(mh);
   wrapper.Dispose();
 }
+*/
 
-// TODO: Make async
 Handle<Value> node_mpg123_new (const Arguments& args) {
   HandleScope scope;
 
   // TODO: Accept an input decoder String
-  int error = 0;
+  int error = MPG123_OK;
   mpg123_handle *mh = mpg123_new(NULL, &error);
 
   Handle<Value> rtn;
   if (error == MPG123_OK) {
-    Persistent<Object> o = Persistent<Object>::New(mhClass->NewInstance());
-    o->SetPointerInInternalField(0, mh);
-    o.MakeWeak(mh, mh_weak_callback);
-    rtn = o;
+    rtn = WrapPointer(mh);
   } else {
     rtn = Integer::New(error);
   }
   return scope.Close(rtn);
 }
+
 
 Handle<Value> node_mpg123_current_decoder (const Arguments& args) {
   UNWRAP_MH;
@@ -89,17 +86,19 @@ Handle<Value> node_mpg123_current_decoder (const Arguments& args) {
   return scope.Close(String::New(decoder));
 }
 
+
 Handle<Value> node_mpg123_supported_decoders (const Arguments& args) {
   HandleScope scope;
   const char **decoders = mpg123_supported_decoders();
   int i = 0;
   Handle<Array> rtn = Array::New();
   while (*decoders != NULL) {
-    rtn->Set(Integer::New(i++), String::New(*decoders));
+    rtn->Set(i++, String::New(*decoders));
     decoders++;
   }
   return scope.Close(rtn);
 }
+
 
 Handle<Value> node_mpg123_decoders (const Arguments& args) {
   HandleScope scope;
@@ -107,18 +106,19 @@ Handle<Value> node_mpg123_decoders (const Arguments& args) {
   int i = 0;
   Handle<Array> rtn = Array::New();
   while (*decoders != NULL) {
-    rtn->Set(Integer::New(i++), String::New(*decoders));
+    rtn->Set(i++, String::New(*decoders));
     decoders++;
   }
   return scope.Close(rtn);
 }
 
-// TODO: Make async
+
 Handle<Value> node_mpg123_open_feed (const Arguments& args) {
   UNWRAP_MH;
   int ret = mpg123_open_feed(mh);
   return scope.Close(Integer::New(ret));
 }
+
 
 // TODO: Make async
 Handle<Value> node_mpg123_decode (const Arguments& args) {
@@ -127,14 +127,13 @@ Handle<Value> node_mpg123_decode (const Arguments& args) {
   // input MP3 data
   const unsigned char *input = NULL;
   if (!args[1]->IsNull()) {
-    input = (const unsigned char *)Buffer::Data(args[1]->ToObject());
+    input = (const unsigned char *)UnwrapPointer(args[1]);
   }
   size_t insize = args[2]->Int32Value();
 
   // the output buffer
-  Local<Object> outbuf = args[3]->ToObject();
   int out_offset = args[4]->Int32Value();
-  unsigned char *output = (unsigned char *)(Buffer::Data(outbuf) + out_offset);
+  unsigned char *output = (unsigned char *)UnwrapPointer(args[3], out_offset);
   size_t outsize = args[5]->Int32Value();
 
   size_t size = 0;
@@ -160,9 +159,6 @@ Handle<Value> node_mpg123_decode (const Arguments& args) {
 
 void InitMPG123(Handle<Object> target) {
   HandleScope scope;
-
-  mhClass = Persistent<ObjectTemplate>::New(ObjectTemplate::New());
-  mhClass->SetInternalFieldCount(1);
 
 #define CONST_INT(value) \
   target->Set(String::NewSymbol(#value), Integer::New(value), \
