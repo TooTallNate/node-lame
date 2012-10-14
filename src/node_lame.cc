@@ -17,6 +17,7 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
+#include "node_pointer.h"
 #include "lame.h"
 
 using namespace v8;
@@ -29,7 +30,7 @@ namespace nodelame {
 
 #define UNWRAP_GFP \
   HandleScope scope; \
-  lame_global_flags *gfp = reinterpret_cast<lame_global_flags *>(Buffer::Data(args[0].As<Object>()));
+  lame_global_flags *gfp = reinterpret_cast<lame_global_flags *>(UnwrapPointer(args[0]));
 
 #define FN(type, v8type, fn) \
 Handle<Value> PASTE(node_lame_get_, fn) (const Arguments& args) { \
@@ -56,28 +57,6 @@ struct encode_req {
   int rtn;
   Persistent<Function> callback;
 };
-
-
-/*
- * Called when the wrapped pointer is garbage collected.
- * We never have to do anything here...
- */
-
-void wrap_pointer_cb(char *data, void *hint) {
-  //fprintf(stderr, "wrap_pointer_cb\n");
-}
-
-Handle<Value> WrapPointer(char *ptr, size_t length) {
-  HandleScope scope;
-  void *user_data = NULL;
-  Buffer *buf = Buffer::New(ptr, length, wrap_pointer_cb, user_data);
-  return scope.Close(buf->handle_);
-}
-
-Handle<Value> WrapPointer(char *ptr) {
-  size_t size = 0;
-  return WrapPointer(ptr, size);
-}
 
 
 /* get_lame_version() */
@@ -121,12 +100,12 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
   UNWRAP_GFP;
 
   // the input buffer
-  char *input = Buffer::Data(args[1].As<Object>());
+  char *input = UnwrapPointer(args[1]);
   int num_samples = args[2]->Int32Value();
 
   // the output buffer
   int out_offset = args[4]->Int32Value();
-  char *output = Buffer::Data(args[3].As<Object>()) + out_offset;
+  char *output = UnwrapPointer(args[3], out_offset);
   int output_size = args[5]->Int32Value();
 
   encode_req *request = new encode_req;
@@ -189,9 +168,8 @@ Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
   UNWRAP_GFP;
 
   // the output buffer
-  Local<Object> outbuf = args[1]->ToObject();
   int out_offset = args[2]->Int32Value();
-  char *output = Buffer::Data(outbuf) + out_offset;
+  char *output = UnwrapPointer(args[1], out_offset);
   int output_size = args[3]->Int32Value();
 
   encode_req *request = new encode_req;
