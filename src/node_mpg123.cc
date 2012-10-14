@@ -117,6 +117,7 @@ Handle<Value> node_mpg123_open_feed (const Arguments& args) {
   return scope.Close(Integer::New(ret));
 }
 
+
 Handle<Value> node_mpg123_getformat (const Arguments& args) {
   UNWRAP_MH;
   long rate;
@@ -135,6 +136,12 @@ Handle<Value> node_mpg123_getformat (const Arguments& args) {
     rtn = Integer::New(ret);
   }
   return scope.Close(rtn);
+}
+
+
+Handle<Value> node_mpg123_safe_buffer (const Arguments& args) {
+  HandleScope scope;
+  return scope.Close(Number::New(mpg123_safe_buffer()));
 }
 
 
@@ -349,6 +356,7 @@ void InitMPG123(Handle<Object> target) {
   NODE_SET_METHOD(target, "mpg123_current_decoder", node_mpg123_current_decoder);
   NODE_SET_METHOD(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
   NODE_SET_METHOD(target, "mpg123_getformat", node_mpg123_getformat);
+  NODE_SET_METHOD(target, "mpg123_safe_buffer", node_mpg123_safe_buffer);
   NODE_SET_METHOD(target, "mpg123_open_feed", node_mpg123_open_feed);
   NODE_SET_METHOD(target, "mpg123_feed", node_mpg123_feed);
   NODE_SET_METHOD(target, "mpg123_read", node_mpg123_read);
