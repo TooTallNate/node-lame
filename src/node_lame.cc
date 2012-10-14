@@ -19,8 +19,6 @@
 #include <node_buffer.h>
 #include "lame.h"
 
-#include "node_async_shim.h"
-
 using namespace v8;
 using namespace node;
 
@@ -49,6 +47,7 @@ Handle<Value> PASTE(node_lame_set_, fn) (const Arguments& args) { \
 
 /* struct that's used for async encoding */
 struct encode_req {
+  uv_work_t req;
   lame_global_flags *gfp;
   unsigned char *input;
   int num_samples;
@@ -87,6 +86,7 @@ Handle<Value> node_get_lame_version (const Arguments& args) {
   return scope.Close(String::New(get_lame_version()));
 }
 
+
 /* lame_close() */
 Handle<Value> node_lame_close (const Arguments& args) {
   UNWRAP_GFP;
@@ -94,15 +94,6 @@ Handle<Value> node_lame_close (const Arguments& args) {
   return Undefined();
 }
 
-/* called when a 'gfp' wrapper Object get's GC'd from JS-land */
-/*
-void gfp_weak_callback (Persistent<Value> wrapper, void *arg) {
-  HandleScope scope;
-  lame_global_flags *gfp = (lame_global_flags *)arg;
-  lame_close(gfp);
-  wrapper.Dispose();
-}
-*/
 
 /* malloc()'s a `lame_t` struct and returns it to JS land */
 Handle<Value> node_lame_init (const Arguments& args) {
@@ -121,45 +112,11 @@ Handle<Value> node_lame_init (const Arguments& args) {
 }
 
 
-/* encode a buffer on the thread pool. */
-async_rtn
-EIO_encode_buffer_interleaved (uv_work_t *req) {
-  encode_req *r = (encode_req *)req->data;
-  r->rtn = lame_encode_buffer_interleaved(
-    r->gfp,
-    (short int *)r->input,
-    r->num_samples,
-    r->output,
-    r->output_size
-  );
-  RETURN_ASYNC;
-}
-
-async_rtn
-EIO_encode_buffer_interleaved_AFTER (uv_work_t *req) {
-  HandleScope scope;
-
-  encode_req *r = (encode_req *)req->data;
-
-  Handle<Value> argv[1];
-  argv[0] = Integer::New(r->rtn);
-
-  TryCatch try_catch;
-
-  r->callback->Call(Context::GetCurrent()->Global(), 1, argv);
-
-  if (try_catch.HasCaught())
-    FatalException(try_catch);
-
-  // cleanup
-  r->callback.Dispose();
-  delete r;
-  RETURN_ASYNC_AFTER;
-}
-
-
 /* lame_encode_buffer_interleaved()
  * The main encoding function */
+void node_lame_encode_buffer_interleaved_async (uv_work_t *);
+void node_lame_encode_buffer_interleaved_after (uv_work_t *);
+
 Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
   UNWRAP_GFP;
 
@@ -180,23 +137,54 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
   request->output_size = output_size;
   request->callback = Persistent<Function>::New(Local<Function>::Cast(args[6]));
 
-  BEGIN_ASYNC(request, EIO_encode_buffer_interleaved, EIO_encode_buffer_interleaved_AFTER);
+  // set a circular pointer so we can get the "encode_req" back later
+  request->req.data = request;
+
+  uv_queue_work(uv_default_loop(), &request->req,
+      node_lame_encode_buffer_interleaved_async,
+      node_lame_encode_buffer_interleaved_after);
+
   return Undefined();
 }
 
 
-async_rtn
-EIO_encode_flush_nogap (uv_work_t *req) {
+/* encode a buffer on the thread pool. */
+void node_lame_encode_buffer_interleaved_async (uv_work_t *req) {
   encode_req *r = (encode_req *)req->data;
-  r->rtn = lame_encode_flush_nogap(
+  r->rtn = lame_encode_buffer_interleaved(
     r->gfp,
+    (short int *)r->input,
+    r->num_samples,
     r->output,
     r->output_size
   );
-  RETURN_ASYNC;
 }
 
+void node_lame_encode_buffer_interleaved_after (uv_work_t *req) {
+  HandleScope scope;
+
+  encode_req *r = (encode_req *)req->data;
+
+  Handle<Value> argv[1];
+  argv[0] = Integer::New(r->rtn);
+
+  TryCatch try_catch;
+
+  r->callback->Call(Context::GetCurrent()->Global(), 1, argv);
+
+  // cleanup
+  r->callback.Dispose();
+  delete r;
+
+  if (try_catch.HasCaught()) {
+    FatalException(try_catch);
+  }
+}
+
+
 /* lame_encode_flush_nogap() */
+void node_lame_encode_flush_nogap_async (uv_work_t *);
+
 Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
   UNWRAP_GFP;
 
@@ -206,16 +194,31 @@ Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
   char *output = Buffer::Data(outbuf) + out_offset;
   int output_size = args[3]->Int32Value();
 
-  encode_req *r = new encode_req;
-  r->gfp = gfp;
-  r->output = (unsigned char *)output;
-  r->output_size = output_size;
-  r->callback = Persistent<Function>::New(Local<Function>::Cast(args[4]));
+  encode_req *request = new encode_req;
+  request->gfp = gfp;
+  request->output = (unsigned char *)output;
+  request->output_size = output_size;
+  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[4]));
 
-  BEGIN_ASYNC(r, EIO_encode_flush_nogap, EIO_encode_buffer_interleaved_AFTER);
+  // set a circular pointer so we can get the "encode_req" back later
+  request->req.data = request;
+
+  // we cheat and use the same "after" function as regular encoding
+  uv_queue_work(uv_default_loop(), &request->req,
+      node_lame_encode_flush_nogap_async,
+      node_lame_encode_buffer_interleaved_after);
+
   return Undefined();
 }
 
+void node_lame_encode_flush_nogap_async (uv_work_t *req) {
+  encode_req *r = (encode_req *)req->data;
+  r->rtn = lame_encode_flush_nogap(
+    r->gfp,
+    r->output,
+    r->output_size
+  );
+}
 
 
 /**

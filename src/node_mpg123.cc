@@ -17,9 +17,8 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
-#include <mpg123.h>
 
-#include "node_async_shim.h"
+#include "mpg123.h"
 
 using namespace v8;
 using namespace node;
