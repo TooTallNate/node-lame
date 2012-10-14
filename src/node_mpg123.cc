@@ -30,16 +30,23 @@ namespace nodelame {
   HandleScope scope; \
   mpg123_handle *mh = reinterpret_cast<mpg123_handle *>(UnwrapPointer(args[0]));
 
-/* struct used for async decoding */
-struct decode_req {
+/* structs used for async decoding */
+struct feed_req {
   uv_work_t req;
   mpg123_handle *mh;
-  const unsigned char *input;
-  size_t insize;
-  unsigned char *output;
-  size_t outsize;
-  size_t bytesWritten;
-  int ret;
+  const unsigned char *in;
+  size_t size;
+  int rtn;
+  Persistent<Function> callback;
+};
+
+struct read_req {
+  uv_work_t req;
+  mpg123_handle *mh;
+  unsigned char *out;
+  size_t size;
+  size_t done;
+  int rtn;
   Persistent<Function> callback;
 };
 
@@ -54,15 +61,6 @@ Handle<Value> node_mpg123_exit (const Arguments& args) {
   return Undefined();
 }
 
-/*
-void mh_weak_callback (Persistent<Value> wrapper, void *arg) {
-  HandleScope scope;
-  mpg123_handle *mh = (mpg123_handle *)arg;
-  mpg123_delete(mh);
-  wrapper.Dispose();
-}
-*/
-
 Handle<Value> node_mpg123_new (const Arguments& args) {
   HandleScope scope;
 
@@ -70,11 +68,11 @@ Handle<Value> node_mpg123_new (const Arguments& args) {
   int error = MPG123_OK;
   mpg123_handle *mh = mpg123_new(NULL, &error);
 
-  Handle<Value> rtn;
+  Local<Value> rtn;
   if (error == MPG123_OK) {
-    rtn = WrapPointer(mh);
+    rtn = Local<Value>::New(WrapPointer(mh));
   } else {
-    rtn = Integer::New(error);
+    rtn = Local<Value>::New(Integer::New(error));
   }
   return scope.Close(rtn);
 }
@@ -119,41 +117,137 @@ Handle<Value> node_mpg123_open_feed (const Arguments& args) {
   return scope.Close(Integer::New(ret));
 }
 
+Handle<Value> node_mpg123_getformat (const Arguments& args) {
+  UNWRAP_MH;
+  long rate;
+  int channels;
+  int encoding;
+  int ret;
+  Local<Value> rtn;
+  ret = mpg123_getformat(mh, &rate, &channels, &encoding);
+  if (ret == MPG123_OK) {
+    Local<Object> o = Object::New();
+    o->Set(String::NewSymbol("rate"), Number::New(rate));
+    o->Set(String::NewSymbol("channels"), Number::New(channels));
+    o->Set(String::NewSymbol("encoding"), Number::New(encoding));
+    rtn = o;
+  } else {
+    rtn = Integer::New(ret);
+  }
+  return scope.Close(rtn);
+}
 
-// TODO: Make async
-Handle<Value> node_mpg123_decode (const Arguments& args) {
+
+void node_mpg123_feed_async (uv_work_t *);
+void node_mpg123_feed_after (uv_work_t *);
+
+Handle<Value> node_mpg123_feed (const Arguments& args) {
   UNWRAP_MH;
 
-  // input MP3 data
-  const unsigned char *input = NULL;
-  if (!args[1]->IsNull()) {
-    input = (const unsigned char *)UnwrapPointer(args[1]);
+  // input buffer
+  char *input = UnwrapPointer(args[1]);
+  size_t size = args[2]->Int32Value();
+
+  feed_req *request = new feed_req;
+  request->mh = mh;
+  request->in = (const unsigned char *)input;
+  request->size = size;
+  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[3]));
+  request->req.data = request;
+
+  uv_queue_work(uv_default_loop(), &request->req,
+      node_mpg123_feed_async,
+      node_mpg123_feed_after);
+
+  return Undefined();
+}
+
+void node_mpg123_feed_async (uv_work_t *req) {
+  feed_req *r = (feed_req *)req->data;
+  r->rtn = mpg123_feed(
+    r->mh,
+    r->in,
+    r->size
+  );
+}
+
+void node_mpg123_feed_after (uv_work_t *req) {
+  HandleScope scope;
+  feed_req *r = (feed_req *)req->data;
+
+  Handle<Value> argv[1];
+  argv[0] = Integer::New(r->rtn);
+
+  TryCatch try_catch;
+
+  r->callback->Call(Context::GetCurrent()->Global(), 1, argv);
+
+  // cleanup
+  r->callback.Dispose();
+  delete r;
+
+  if (try_catch.HasCaught()) {
+    FatalException(try_catch);
   }
-  size_t insize = args[2]->Int32Value();
+}
 
-  // the output buffer
-  int out_offset = args[4]->Int32Value();
-  unsigned char *output = (unsigned char *)UnwrapPointer(args[3], out_offset);
-  size_t outsize = args[5]->Int32Value();
 
-  size_t size = 0;
-  int ret = mpg123_decode(mh, input, insize, output, outsize, &size);
+void node_mpg123_read_async (uv_work_t *);
+void node_mpg123_read_after (uv_work_t *);
 
-  Local<Object> rtn = Object::New();
-  rtn->Set(String::NewSymbol("ret"), Integer::New(ret));
-  rtn->Set(String::NewSymbol("size"), Integer::New(size));
+Handle<Value> node_mpg123_read (const Arguments& args) {
+  UNWRAP_MH;
 
-  if (ret == MPG123_NEW_FORMAT) {
-    long rate;
-    int channels;
-    int encoding;
-    mpg123_getformat(mh, &rate, &channels, &encoding);
-    rtn->Set(String::NewSymbol("rate"), Integer::New(rate));
-    rtn->Set(String::NewSymbol("channels"), Integer::New(channels));
-    rtn->Set(String::NewSymbol("encoding"), Integer::New(encoding));
+  // output buffer
+  char *output = UnwrapPointer(args[1]);
+  size_t size = args[2]->Int32Value();
+
+  read_req *request = new read_req;
+  request->mh = mh;
+  request->out = (unsigned char *)output;
+  request->size = size;
+  request->done = 0;
+  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[3]));
+  request->req.data = request;
+
+  uv_queue_work(uv_default_loop(), &request->req,
+      node_mpg123_read_async,
+      node_mpg123_read_after);
+
+  return Undefined();
+}
+
+void node_mpg123_read_async (uv_work_t *req) {
+  read_req *r = (read_req *)req->data;
+  printf("before read()\n");
+  r->rtn = mpg123_read(
+    r->mh,
+    r->out,
+    r->size,
+    &r->done
+  );
+  printf("after read()\n");
+}
+
+void node_mpg123_read_after (uv_work_t *req) {
+  HandleScope scope;
+  read_req *r = (read_req *)req->data;
+
+  Handle<Value> argv[2];
+  argv[0] = Integer::New(r->rtn);
+  argv[1] = Integer::New(r->done);
+
+  TryCatch try_catch;
+
+  r->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+
+  // cleanup
+  r->callback.Dispose();
+  delete r;
+
+  if (try_catch.HasCaught()) {
+    FatalException(try_catch);
   }
-
-  return scope.Close(rtn);
 }
 
 
@@ -213,11 +307,32 @@ void InitMPG123(Handle<Object> target) {
   CONST_INT(MPG123_BAD_CUSTOM_IO); /**< Custom I/O not prepared. */
   CONST_INT(MPG123_LFS_OVERFLOW); /**< Offset value overflow during translation of large file API calls -- your client program cannot handle that large file. */
 
+  /* mpg123_enc_enum */
+  CONST_INT(MPG123_ENC_8);
+  CONST_INT(MPG123_ENC_16);
+  CONST_INT(MPG123_ENC_24);
+  CONST_INT(MPG123_ENC_32);
+  CONST_INT(MPG123_ENC_SIGNED);
+  CONST_INT(MPG123_ENC_FLOAT);
+  CONST_INT(MPG123_ENC_SIGNED_16);
+  CONST_INT(MPG123_ENC_UNSIGNED_16);
+  CONST_INT(MPG123_ENC_UNSIGNED_8);
+  CONST_INT(MPG123_ENC_SIGNED_8);
+  CONST_INT(MPG123_ENC_ULAW_8);
+  CONST_INT(MPG123_ENC_ALAW_8);
+  CONST_INT(MPG123_ENC_SIGNED_32);
+  CONST_INT(MPG123_ENC_UNSIGNED_32);
+  CONST_INT(MPG123_ENC_SIGNED_24);
+  CONST_INT(MPG123_ENC_UNSIGNED_24);
+  CONST_INT(MPG123_ENC_FLOAT_32);
+  CONST_INT(MPG123_ENC_FLOAT_64);
+  CONST_INT(MPG123_ENC_ANY);
+
   /* mpg123_channelcount */
   CONST_INT(MPG123_MONO);
   CONST_INT(MPG123_STEREO);
 
-  // mpg123_channels
+  /* mpg123_channels */
   CONST_INT(MPG123_LEFT);
   CONST_INT(MPG123_RIGHT);
   CONST_INT(MPG123_LR);
@@ -233,8 +348,10 @@ void InitMPG123(Handle<Object> target) {
   NODE_SET_METHOD(target, "mpg123_decoders", node_mpg123_decoders);
   NODE_SET_METHOD(target, "mpg123_current_decoder", node_mpg123_current_decoder);
   NODE_SET_METHOD(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
+  NODE_SET_METHOD(target, "mpg123_getformat", node_mpg123_getformat);
   NODE_SET_METHOD(target, "mpg123_open_feed", node_mpg123_open_feed);
-  NODE_SET_METHOD(target, "mpg123_decode", node_mpg123_decode);
+  NODE_SET_METHOD(target, "mpg123_feed", node_mpg123_feed);
+  NODE_SET_METHOD(target, "mpg123_read", node_mpg123_read);
 }
 
 } // nodelame namespace
