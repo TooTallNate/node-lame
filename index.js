@@ -1,22 +1,6 @@
 
 /**
- * Module entry point.
- * Exports the public API modules.
+ * The `Encoder` outputs an MP3 file from PCM data written to it.
  */
 
-r('./lib/encoder');
-r('./lib/decoder');
-r('./lib/parser');
-
-exports.bindings = require('./lib/bindings');
-
-/**
- * Require a module and copy all it's exports onto the module's exports.
- */
-
-function r (m) {
-  var mod = require(m);
-  for (var i in mod) {
-    exports[i] = mod[i];
-  }
-}
+exports.Encoder = require('./lib/encoder');
