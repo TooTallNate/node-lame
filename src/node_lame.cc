@@ -66,6 +66,13 @@ Handle<Value> node_get_lame_version (const Arguments& args) {
 }
 
 
+/* get_lame_os_bitness() */
+Handle<Value> node_get_lame_os_bitness (const Arguments& args) {
+  HandleScope scope;
+  return scope.Close(String::New(get_lame_os_bitness()));
+}
+
+
 /* lame_close() */
 Handle<Value> node_lame_close (const Arguments& args) {
   UNWRAP_GFP;
@@ -255,6 +262,42 @@ Handle<Value> node_lame_print_config (const Arguments& args) {
   return Undefined();
 }
 
+
+/* lame_get_bitrate() */
+Handle<Value> node_lame_bitrates (const Arguments& args) {
+  HandleScope scope;
+  int x = 3;
+  int y = 16;
+  Local<Array> n;
+  Local<Array> ret = Array::New(x);
+  for (int i = 0; i < x; i++) {
+    n = Array::New(y);
+    for (int j = 0; j < y; j++) {
+      n->Set(j, Integer::New(lame_get_bitrate(i, j)));
+    }
+    ret->Set(i, n);
+  }
+  return scope.Close(ret);
+}
+
+
+/* lame_get_samplerate() */
+Handle<Value> node_lame_samplerates (const Arguments& args) {
+  HandleScope scope;
+  int x = 3;
+  int y = 4;
+  Local<Array> n;
+  Local<Array> ret = Array::New(x);
+  for (int i = 0; i < x; i++) {
+    n = Array::New(y);
+    for (int j = 0; j < y; j++) {
+      n->Set(j, Integer::New(lame_get_samplerate(i, j)));
+    }
+    ret->Set(i, n);
+  }
+  return scope.Close(ret);
+}
+
 // define the node_lame_get/node_lame_set functions
 FN(unsigned long, Number, num_samples);
 FN(int, Int32, in_samplerate);
@@ -330,6 +373,7 @@ void InitLame(Handle<Object> target) {
 
   // Functions
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
+  NODE_SET_METHOD(target, "get_lame_os_bitness", node_get_lame_os_bitness);
   NODE_SET_METHOD(target, "lame_close", node_lame_close);
   NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
   NODE_SET_METHOD(target, "lame_encode_flush_nogap", node_lame_encode_flush_nogap);
@@ -339,6 +383,8 @@ void InitLame(Handle<Object> target) {
   NODE_SET_METHOD(target, "lame_print_config", node_lame_print_config);
   NODE_SET_METHOD(target, "lame_print_internals", node_lame_print_internals);
   NODE_SET_METHOD(target, "lame_init", node_lame_init);
+  NODE_SET_METHOD(target, "lame_bitrates", node_lame_bitrates);
+  NODE_SET_METHOD(target, "lame_samplerates", node_lame_samplerates);
 
   // Get/Set functions
 #define LAME_SET_METHOD(fn) \
