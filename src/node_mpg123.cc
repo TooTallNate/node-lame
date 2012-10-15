@@ -256,14 +256,12 @@ Handle<Value> node_mpg123_read (const Arguments& args) {
 
 void node_mpg123_read_async (uv_work_t *req) {
   read_req *r = (read_req *)req->data;
-  printf("before read()\n");
   r->rtn = mpg123_read(
     r->mh,
     r->out,
     r->size,
     &r->done
   );
-  printf("after read()\n");
 }
 
 void node_mpg123_read_after (uv_work_t *req) {
