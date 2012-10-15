@@ -88,11 +88,6 @@ Handle<Value> node_lame_init (const Arguments& args) {
   lame_global_flags *gfp = lame_init();
   if (gfp == NULL) return Null();
 
-  // disable id3v2 in the encode stream;
-  // user must call lame_getid3v2_tag() manually
-  // TODO: Move to it's own binding function
-  lame_set_write_id3tag_automatic(gfp, 0);
-
   Handle<Value> wrapper = WrapPointer((char *)gfp);
   return scope.Close(wrapper);
 }
