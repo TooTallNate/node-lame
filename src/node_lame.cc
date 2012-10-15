@@ -261,14 +261,18 @@ Handle<Value> node_lame_print_config (const Arguments& args) {
 /* lame_get_bitrate() */
 Handle<Value> node_lame_bitrates (const Arguments& args) {
   HandleScope scope;
+  int v;
   int x = 3;
   int y = 16;
   Local<Array> n;
-  Local<Array> ret = Array::New(x);
+  Local<Array> ret = Array::New();
   for (int i = 0; i < x; i++) {
-    n = Array::New(y);
+    n = Array::New();
     for (int j = 0; j < y; j++) {
-      n->Set(j, Integer::New(lame_get_bitrate(i, j)));
+      v = lame_get_bitrate(i, j);
+      if (v >= 0) {
+        n->Set(j, Integer::New(v));
+      }
     }
     ret->Set(i, n);
   }
@@ -279,14 +283,18 @@ Handle<Value> node_lame_bitrates (const Arguments& args) {
 /* lame_get_samplerate() */
 Handle<Value> node_lame_samplerates (const Arguments& args) {
   HandleScope scope;
+  int v;
   int x = 3;
   int y = 4;
   Local<Array> n;
-  Local<Array> ret = Array::New(x);
+  Local<Array> ret = Array::New();
   for (int i = 0; i < x; i++) {
-    n = Array::New(y);
+    n = Array::New();
     for (int j = 0; j < y; j++) {
-      n->Set(j, Integer::New(lame_get_samplerate(i, j)));
+      v = lame_get_samplerate(i, j);
+      if (v >= 0) {
+        n->Set(j, Integer::New(v));
+      }
     }
     ret->Set(i, n);
   }
