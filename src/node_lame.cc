@@ -318,6 +318,14 @@ void InitLame(Handle<Object> target) {
   CONST_INT(PAD_ADJUST);
   // Maximum size of an album art
   CONST_INT(LAME_MAXALBUMART);
+  // lame_errorcodes_t
+  CONST_INT(LAME_OKAY);
+  CONST_INT(LAME_NOERROR);
+  CONST_INT(LAME_GENERICERROR);
+  CONST_INT(LAME_NOMEM);
+  CONST_INT(LAME_BADBITRATE);
+  CONST_INT(LAME_BADSAMPFREQ);
+  CONST_INT(LAME_INTERNALERROR);
 
 
   // Functions
