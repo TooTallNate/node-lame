@@ -7,6 +7,9 @@
 #   ./out/Debug/test
 
 {
+  'variables': {
+    'target_arch%': 'ia32'
+  },
   'target_defaults': {
     'default_configuration': 'Debug',
     'configurations': {
@@ -52,9 +55,6 @@
 
   'targets': [
     {
-      'variables': {
-        'target_arch%': 'ia32'
-      },
       'target_name': 'mpg123',
       'product_prefix': 'lib',
       'type': 'static_library',
@@ -106,6 +106,45 @@
         ['OS=="mac"', {
           'conditions': [
             ['target_arch=="ia32"', {
+              'defines': [
+                'BUILDING_OUTPUT_MODULES=1',
+                'OPT_MULTI',
+                'OPT_GENERIC',
+                'OPT_GENERIC_DITHER',
+                'OPT_I386',
+                'OPT_I586',
+                'OPT_I586_DITHER',
+                'OPT_MMX',
+                'OPT_3DNOW',
+                'OPT_3DNOWEXT',
+                'OPT_SSE',
+                'REAL_IS_FLOAT',
+                'NOXFERMEM',
+                'NEWOLD_WRITE_SAMPLE',
+              ],
+              'sources': [
+                'src/libmpg123/dct64_i386.c',
+                'src/libmpg123/synth_i586.S',
+                'src/libmpg123/synth_i586_dither.S',
+                'src/libmpg123/dct64_mmx.S',
+                'src/libmpg123/tabinit_mmx.S',
+                'src/libmpg123/synth_mmx.S',
+                'src/libmpg123/synth_3dnow.S',
+                'src/libmpg123/dct64_3dnow.S',
+                'src/libmpg123/equalizer_3dnow.S',
+                'src/libmpg123/dct36_3dnow.S',
+                'src/libmpg123/dct64_3dnowext.S',
+                'src/libmpg123/synth_3dnowext.S',
+                'src/libmpg123/dct36_3dnowext.S',
+                'src/libmpg123/dct64_sse.S',
+                'src/libmpg123/dct64_sse_float.S',
+                'src/libmpg123/synth_sse_float.S',
+                'src/libmpg123/synth_stereo_sse_float.S',
+                'src/libmpg123/synth_sse_s32.S',
+                'src/libmpg123/synth_stereo_sse_s32.S',
+                'src/libmpg123/synth_sse.S',
+                'src/libmpg123/getcpuflags.S',
+              ]
             }],
             ['target_arch=="x64"', {
               'defines': [
@@ -114,23 +153,21 @@
                 'OPT_GENERIC',
                 'OPT_GENERIC_DITHER',
                 'REAL_IS_FLOAT',
-                'NOXFERMEM'
+                'NOXFERMEM',
+              ],
+              'sources': [
+                'src/libmpg123/dct64_x86_64.S',
+                'src/libmpg123/dct64_x86_64_float.S',
+                'src/libmpg123/synth_x86_64_float.S',
+                'src/libmpg123/synth_x86_64_s32.S',
+                'src/libmpg123/synth_stereo_x86_64_float.S',
+                'src/libmpg123/synth_stereo_x86_64_s32.S',
+                'src/libmpg123/synth_x86_64.S',
+                'src/libmpg123/synth_stereo_x86_64.S',
               ]
             }]
           ]
         }],
-        ['target_arch=="x64"', {
-          'sources': [
-            'src/libmpg123/dct64_x86_64.S',
-            'src/libmpg123/dct64_x86_64_float.S',
-            'src/libmpg123/synth_x86_64_float.S',
-            'src/libmpg123/synth_x86_64_s32.S',
-            'src/libmpg123/synth_stereo_x86_64_float.S',
-            'src/libmpg123/synth_stereo_x86_64_s32.S',
-            'src/libmpg123/synth_x86_64.S',
-            'src/libmpg123/synth_stereo_x86_64.S',
-          ]
-        }]
       ]
     },
 
