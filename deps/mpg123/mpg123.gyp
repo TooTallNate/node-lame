@@ -107,7 +107,6 @@
           'conditions': [
             ['target_arch=="ia32"', {
               'defines': [
-                'BUILDING_OUTPUT_MODULES=1',
                 'OPT_MULTI',
                 'OPT_GENERIC',
                 'OPT_GENERIC_DITHER',
