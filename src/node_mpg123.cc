@@ -145,6 +145,36 @@ Handle<Value> node_mpg123_safe_buffer (const Arguments& args) {
 }
 
 
+Handle<Value> node_mpg123_outblock (const Arguments& args) {
+  UNWRAP_MH;
+  return scope.Close(Number::New(mpg123_outblock(mh)));
+}
+
+
+Handle<Value> node_mpg123_framepos (const Arguments& args) {
+  UNWRAP_MH;
+  return scope.Close(Number::New(mpg123_framepos(mh)));
+}
+
+
+Handle<Value> node_mpg123_tell (const Arguments& args) {
+  UNWRAP_MH;
+  return scope.Close(Number::New(mpg123_tell(mh)));
+}
+
+
+Handle<Value> node_mpg123_tellframe (const Arguments& args) {
+  UNWRAP_MH;
+  return scope.Close(Number::New(mpg123_tellframe(mh)));
+}
+
+
+Handle<Value> node_mpg123_tell_stream (const Arguments& args) {
+  UNWRAP_MH;
+  return scope.Close(Number::New(mpg123_tell_stream(mh)));
+}
+
+
 void node_mpg123_feed_async (uv_work_t *);
 void node_mpg123_feed_after (uv_work_t *);
 
@@ -357,6 +387,11 @@ void InitMPG123(Handle<Object> target) {
   NODE_SET_METHOD(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
   NODE_SET_METHOD(target, "mpg123_getformat", node_mpg123_getformat);
   NODE_SET_METHOD(target, "mpg123_safe_buffer", node_mpg123_safe_buffer);
+  NODE_SET_METHOD(target, "mpg123_outblock", node_mpg123_outblock);
+  NODE_SET_METHOD(target, "mpg123_framepos", node_mpg123_framepos);
+  NODE_SET_METHOD(target, "mpg123_tell", node_mpg123_tell);
+  NODE_SET_METHOD(target, "mpg123_tellframe", node_mpg123_tellframe);
+  NODE_SET_METHOD(target, "mpg123_tell_stream", node_mpg123_tell_stream);
   NODE_SET_METHOD(target, "mpg123_open_feed", node_mpg123_open_feed);
   NODE_SET_METHOD(target, "mpg123_feed", node_mpg123_feed);
   NODE_SET_METHOD(target, "mpg123_read", node_mpg123_read);
