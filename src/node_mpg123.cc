@@ -128,9 +128,9 @@ Handle<Value> node_mpg123_getformat (const Arguments& args) {
   ret = mpg123_getformat(mh, &rate, &channels, &encoding);
   if (ret == MPG123_OK) {
     Local<Object> o = Object::New();
-    o->Set(String::NewSymbol("rate"), Number::New(rate));
-    o->Set(String::NewSymbol("channels"), Number::New(channels));
     o->Set(String::NewSymbol("raw_encoding"), Number::New(encoding));
+    o->Set(String::NewSymbol("sampleRate"), Number::New(rate));
+    o->Set(String::NewSymbol("channels"), Number::New(channels));
     o->Set(String::NewSymbol("signed"), Boolean::New(encoding & MPG123_ENC_SIGNED));
     o->Set(String::NewSymbol("float"), Boolean::New(encoding & MPG123_ENC_FLOAT));
     o->Set(String::NewSymbol("ulaw"), Boolean::New(encoding & MPG123_ENC_ULAW_8));
