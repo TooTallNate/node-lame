@@ -130,7 +130,21 @@ Handle<Value> node_mpg123_getformat (const Arguments& args) {
     Local<Object> o = Object::New();
     o->Set(String::NewSymbol("rate"), Number::New(rate));
     o->Set(String::NewSymbol("channels"), Number::New(channels));
-    o->Set(String::NewSymbol("encoding"), Number::New(encoding));
+    o->Set(String::NewSymbol("raw_encoding"), Number::New(encoding));
+    o->Set(String::NewSymbol("signed"), Boolean::New(encoding & MPG123_ENC_SIGNED));
+    o->Set(String::NewSymbol("float"), Boolean::New(encoding & MPG123_ENC_FLOAT));
+    o->Set(String::NewSymbol("ulaw"), Boolean::New(encoding & MPG123_ENC_ULAW_8));
+    o->Set(String::NewSymbol("alaw"), Boolean::New(encoding & MPG123_ENC_ALAW_8));
+    if (encoding & MPG123_ENC_8)
+      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(8));
+    else if (encoding & MPG123_ENC_16)
+      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(16));
+    else if (encoding & MPG123_ENC_24)
+      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(24));
+    else if (encoding & MPG123_ENC_32 || encoding & MPG123_ENC_FLOAT_32)
+      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(32));
+    else if (encoding & MPG123_ENC_FLOAT_64)
+      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(64));
     rtn = o;
   } else {
     rtn = Integer::New(ret);
