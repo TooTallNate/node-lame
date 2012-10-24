@@ -136,15 +136,15 @@ Handle<Value> node_mpg123_getformat (const Arguments& args) {
     o->Set(String::NewSymbol("ulaw"), Boolean::New(encoding & MPG123_ENC_ULAW_8));
     o->Set(String::NewSymbol("alaw"), Boolean::New(encoding & MPG123_ENC_ALAW_8));
     if (encoding & MPG123_ENC_8)
-      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(8));
+      o->Set(String::NewSymbol("bitDepth"), Integer::New(8));
     else if (encoding & MPG123_ENC_16)
-      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(16));
+      o->Set(String::NewSymbol("bitDepth"), Integer::New(16));
     else if (encoding & MPG123_ENC_24)
-      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(24));
+      o->Set(String::NewSymbol("bitDepth"), Integer::New(24));
     else if (encoding & MPG123_ENC_32 || encoding & MPG123_ENC_FLOAT_32)
-      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(32));
+      o->Set(String::NewSymbol("bitDepth"), Integer::New(32));
     else if (encoding & MPG123_ENC_FLOAT_64)
-      o->Set(String::NewSymbol("bitsPerSample"), Integer::New(64));
+      o->Set(String::NewSymbol("bitDepth"), Integer::New(64));
     rtn = o;
   } else {
     rtn = Integer::New(ret);
