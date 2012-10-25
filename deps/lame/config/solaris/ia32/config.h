@@ -22,7 +22,7 @@
 /* #undef DEBUG */
 
 /* allow to compute a more accurate replaygain value */
-#define DECODE_ON_THE_FLY 1
+/* #undef DECODE_ON_THE_FLY */
 
 /* double is faster than float on Alpha */
 /* #undef FLOAT */
@@ -120,7 +120,7 @@
 #define HAVE_MEMORY_H 1
 
 /* build with mpglib support */
-#define HAVE_MPGLIB 1
+/* #undef HAVE_MPGLIB */
 
 /* have nasm */
 /* #undef HAVE_NASM */
