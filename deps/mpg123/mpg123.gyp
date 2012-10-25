@@ -167,6 +167,11 @@
             }]
           ]
         }],
+        ['OS=="win"', {
+          'sources': [
+            'ports/MSVC++/msvc.c'
+          ]
+        }]
       ]
     },
 
