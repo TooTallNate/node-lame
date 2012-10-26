@@ -1,20 +1,32 @@
-{   "name": "lame"
-  , "description": "NodeJS native bindings to libmp3lame & libmpg123."
-  , "keywords": [ "lame", "mp3", "mpeg", "mpg", "encode", "decode", "parse" ]
-  , "version": "0.0.4"
-  , "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)"
-  , "repository": { "type": "git", "url": "git://github.com/TooTallNate/node-lame.git" }
-  , "main": "./index.js"
-  , "dependencies": {
-      "bindings": "*"
-    , "debug": "*"
-    , "strtok": "0.1.x"
-    , "readable-stream": "*"
-  }
-  , "devDependencies": {
-      "mocha": "*"
-  }
-  , "scripts": {
-      "test": "mocha --reporter spec"
+{
+  "name": "lame",
+  "description": "NodeJS native bindings to libmp3lame & libmpg123.",
+  "keywords": [
+    "lame",
+    "mpg123",
+    "mp3",
+    "mpeg",
+    "mpg",
+    "encode",
+    "decode"
+  ],
+  "version": "0.0.4",
+  "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/TooTallNate/node-lame.git"
+  },
+  "main": "./index.js",
+  "dependencies": {
+    "bindings": "*",
+    "debug": "*",
+    "strtok": "0.1.x",
+    "readable-stream": "~0.0.3"
+  },
+  "devDependencies": {
+    "mocha": "*"
+  },
+  "scripts": {
+    "test": "mocha --reporter spec"
   }
 }
