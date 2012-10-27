@@ -342,6 +342,11 @@ FN(int, Int32, highpasswidth);
 void InitLame(Handle<Object> target) {
   HandleScope scope;
 
+  target->Set(String::NewSymbol("sizeof_short"), Integer::New(sizeof(short int)), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::NewSymbol("sizeof_int"), Integer::New(sizeof(int)), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::NewSymbol("sizeof_float"), Integer::New(sizeof(float)), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target->Set(String::NewSymbol("sizeof_double"), Integer::New(sizeof(double)), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+
 #define CONST_INT(value) \
   target->Set(String::NewSymbol(#value), Integer::New(value), \
       static_cast<PropertyAttribute>(ReadOnly|DontDelete));
