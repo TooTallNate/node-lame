@@ -30,10 +30,10 @@ Here's an example of using `node-lame` to encode some raw PCM data coming from
 var lame = require('lame')
 
 // Create the Encoder instance
-var encoder = lame.createEncoder({
-    channels: 2           // 2 channels (left and right)
-  , sampleSize: 16        // 16-bit samples
-  , sampleRate: 44100     // 44,100 Hz sample rate
+var encoder = new lame.Encoder({
+  channels: 2,        // 2 channels (left and right)
+  bitDepth: 16,       // 16-bit samples
+  sampleRate: 44100   // 44,100 Hz sample rate
 });
 
 // Raw PCM data from stdin gets piped into the encoder.
@@ -43,6 +43,7 @@ process.stdin.pipe(encoder);
 encoder.pipe(process.stdout);
 ```
 
+See the `examples` directory for some more example code.
 
 API
 ---
