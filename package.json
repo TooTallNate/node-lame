@@ -20,7 +20,6 @@
   "dependencies": {
     "bindings": "*",
     "debug": "*",
-    "strtok": "0.1.x",
     "readable-stream": "~0.0.3"
   },
   "devDependencies": {
