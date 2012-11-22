@@ -29,17 +29,17 @@ Here's an example of using `node-lame` to encode some raw PCM data coming from
 ``` javascript
 var lame = require('lame')
 
-// Create the Encoder instance
+// create the Encoder instance
 var encoder = new lame.Encoder({
   channels: 2,        // 2 channels (left and right)
   bitDepth: 16,       // 16-bit samples
   sampleRate: 44100   // 44,100 Hz sample rate
 });
 
-// Raw PCM data from stdin gets piped into the encoder.
+// raw PCM data from stdin gets piped into the encoder
 process.stdin.pipe(encoder);
 
-// The generated MP3 file gets piped to stdout.
+// the generated MP3 file gets piped to stdout
 encoder.pipe(process.stdout);
 ```
 
