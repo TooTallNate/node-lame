@@ -36,6 +36,22 @@ describe('Decoder', function () {
       decoder.resume();
     });
 
+    it('should emit "readable" events', function (done) {
+      var file = fs.createReadStream(filename);
+      var count = 0;
+      var decoder = new lame.Decoder();
+      decoder.on('readable', function () {
+        count++;
+        var b;
+        while (null != (b = decoder.read()));
+      });
+      decoder.on('finish', function () {
+        assert(count > 0);
+        done();
+      });
+      file.pipe(decoder);
+    });
+
   });
 
 });
