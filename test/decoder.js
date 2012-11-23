@@ -10,7 +10,7 @@ describe('Decoder', function () {
   describe('pipershut_lo.mp3', function ()  {
     var filename = path.resolve(fixtures, 'pipershut_lo.mp3');
 
-    it('should emit a "format" event', function (done) {
+    it('should emit a single "format" event', function (done) {
       var file = fs.createReadStream(filename);
       var decoder = new lame.Decoder();
       decoder.on('format', function (format) {
@@ -18,6 +18,22 @@ describe('Decoder', function () {
         done();
       });
       file.pipe(decoder);
+    });
+
+    it('should emit a single "finish" event', function (done) {
+      var file = fs.createReadStream(filename);
+      var decoder = new lame.Decoder();
+      decoder.on('finish', done);
+      file.pipe(decoder);
+      decoder.resume();
+    });
+
+    it('should emit a single "end" event', function (done) {
+      var file = fs.createReadStream(filename);
+      var decoder = new lame.Decoder();
+      decoder.on('end', done);
+      file.pipe(decoder);
+      decoder.resume();
     });
 
   });
