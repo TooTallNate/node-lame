@@ -24,7 +24,8 @@
   },
   "devDependencies": {
     "mocha": "*",
-    "wav": "0"
+    "wav": "0",
+    "speaker": "0"
   },
   "scripts": {
     "test": "mocha --reporter spec"
