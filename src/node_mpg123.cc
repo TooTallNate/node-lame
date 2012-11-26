@@ -18,8 +18,7 @@
 #include <node.h>
 #include <node_buffer.h>
 #include "node_pointer.h"
-
-#include "mpg123.h"
+#include "node_mpg123.h"
 
 using namespace v8;
 using namespace node;
@@ -30,37 +29,18 @@ namespace nodelame {
   HandleScope scope; \
   mpg123_handle *mh = reinterpret_cast<mpg123_handle *>(UnwrapPointer(args[0]));
 
-/* structs used for async decoding */
-struct feed_req {
-  uv_work_t req;
-  mpg123_handle *mh;
-  const unsigned char *in;
-  size_t size;
-  int rtn;
-  Persistent<Function> callback;
-};
-
-struct read_req {
-  uv_work_t req;
-  mpg123_handle *mh;
-  unsigned char *out;
-  size_t size;
-  size_t done;
-  int rtn;
-  int meta;
-  Persistent<Function> callback;
-};
-
 Handle<Value> node_mpg123_init (const Arguments& args) {
   HandleScope scope;
   return scope.Close(Integer::New(mpg123_init()));
 }
+
 
 Handle<Value> node_mpg123_exit (const Arguments& args) {
   HandleScope scope;
   mpg123_exit();
   return Undefined();
 }
+
 
 Handle<Value> node_mpg123_new (const Arguments& args) {
   HandleScope scope;
@@ -190,9 +170,6 @@ Handle<Value> node_mpg123_tell_stream (const Arguments& args) {
 }
 
 
-void node_mpg123_feed_async (uv_work_t *);
-void node_mpg123_feed_after (uv_work_t *);
-
 Handle<Value> node_mpg123_feed (const Arguments& args) {
   UNWRAP_MH;
 
@@ -243,9 +220,6 @@ void node_mpg123_feed_after (uv_work_t *req) {
   }
 }
 
-
-void node_mpg123_read_async (uv_work_t *);
-void node_mpg123_read_after (uv_work_t *);
 
 Handle<Value> node_mpg123_read (const Arguments& args) {
   UNWRAP_MH;
