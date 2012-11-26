@@ -47,6 +47,7 @@ struct read_req {
   size_t size;
   size_t done;
   int rtn;
+  int meta;
   Persistent<Function> callback;
 };
 
@@ -276,19 +277,23 @@ void node_mpg123_read_async (uv_work_t *req) {
     r->size,
     &r->done
   );
+
+  /* any new metadata? */
+  r->meta = mpg123_meta_check(r->mh);
 }
 
 void node_mpg123_read_after (uv_work_t *req) {
   HandleScope scope;
   read_req *r = (read_req *)req->data;
 
-  Handle<Value> argv[2];
+  Handle<Value> argv[3];
   argv[0] = Integer::New(r->rtn);
   argv[1] = Integer::New(r->done);
+  argv[2] = Integer::New(r->meta);
 
   TryCatch try_catch;
 
-  r->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+  r->callback->Call(Context::GetCurrent()->Global(), 3, argv);
 
   // cleanup
   r->callback.Dispose();
@@ -297,6 +302,84 @@ void node_mpg123_read_after (uv_work_t *req) {
   if (try_catch.HasCaught()) {
     FatalException(try_catch);
   }
+}
+
+
+/* TODO: async? */
+Handle<Value> node_mpg123_id3 (const Arguments& args) {
+  UNWRAP_MH;
+  mpg123_id3v1 *v1;
+  mpg123_id3v2 *v2;
+
+  int r = mpg123_id3(mh, &v1, &v2);
+  Handle<Value> rtn;
+  if (r == MPG123_OK) {
+    if (v1 != NULL) {
+      /* got id3v1 tags */
+      Local<Object> o = Object::New();
+      o->Set(String::NewSymbol("tag"), String::New(v1->tag, sizeof(v1->tag)));
+      o->Set(String::NewSymbol("title"), String::New(v1->title, sizeof(v1->title)));
+      o->Set(String::NewSymbol("artist"), String::New(v1->artist, sizeof(v1->artist)));
+      o->Set(String::NewSymbol("album"), String::New(v1->album, sizeof(v1->album)));
+      o->Set(String::NewSymbol("year"), String::New(v1->year, sizeof(v1->year)));
+      if (v1->comment[28] == 0 && v1->comment[29] >= 1) {
+        /* ID3v1.1 */
+        o->Set(String::NewSymbol("comment"), String::New(v1->comment, sizeof(v1->comment) - 2));
+        o->Set(String::NewSymbol("trackNumber"), Integer::New(v1->comment[29]));
+      } else {
+        /* ID3v1 */
+        o->Set(String::NewSymbol("comment"), String::New(v1->comment, sizeof(v1->comment)));
+      }
+      o->Set(String::NewSymbol("genre"), Integer::New(v1->genre));
+      rtn = o;
+    } else if (v2 != NULL) {
+      /* got id3v2 tags */
+      mpg123_string *s;
+      mpg123_text *t;
+      Local<Object> o = Object::New();
+      Local<Array> a;
+      Local<Object> text;
+#define SET(prop) \
+      s = v2->prop; \
+      if (s != NULL) \
+        o->Set(String::NewSymbol(#prop), String::New(s->p, s->fill));
+      SET(title)
+      SET(artist)
+      SET(album)
+      SET(year)
+      SET(genre)
+      SET(comment)
+#undef SET
+
+#define SET_ARRAY(array, count) \
+      a = Array::New(v2->count); \
+      for (size_t i = 0; i < v2->count; i++) { \
+        t = &v2->array[i]; \
+        text = Object::New(); \
+        a->Set(i, text); \
+        text->Set(String::NewSymbol("lang"), String::New(t->lang, sizeof(t->lang))); \
+        text->Set(String::NewSymbol("id"), String::New(t->id, sizeof(t->id))); \
+        s = &t->description; \
+        if (s != NULL) \
+          text->Set(String::NewSymbol("description"), String::New(s->p, s->fill)); \
+        s = &t->text; \
+        if (s != NULL) \
+          text->Set(String::NewSymbol("text"), String::New(s->p, s->fill)); \
+      } \
+      o->Set(String::NewSymbol(#count), a);
+      SET_ARRAY(comment_list, comments)
+      SET_ARRAY(text, texts)
+      SET_ARRAY(extra, extras)
+#undef SET_ARRAY
+
+      rtn = o;
+    } else {
+      rtn = Null();
+    }
+  } else {
+    rtn = Integer::New(r);
+  }
+  return scope.Close(rtn);
 }
 
 
@@ -407,6 +490,7 @@ void InitMPG123(Handle<Object> target) {
   NODE_SET_METHOD(target, "mpg123_open_feed", node_mpg123_open_feed);
   NODE_SET_METHOD(target, "mpg123_feed", node_mpg123_feed);
   NODE_SET_METHOD(target, "mpg123_read", node_mpg123_read);
+  NODE_SET_METHOD(target, "mpg123_id3", node_mpg123_id3);
 }
 
 } // nodelame namespace
