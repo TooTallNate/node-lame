@@ -8,6 +8,13 @@ var fixtures = path.resolve(__dirname, 'fixtures');
 describe('Decoder', function () {
 
   describe('pipershut_lo.mp3', function ()  {
+    var title = 'The Burning of the Piper\'s Hut';
+    var artist = 'Tony Cuffe & Billy Jackson';
+    var album = 'Sae Will We Yet';
+    var year = '2003';
+    var comment = 'sample of full track';
+    var trackNumber = 8;
+    var genre = 88;
     var filename = path.resolve(fixtures, 'pipershut_lo.mp3');
 
     it('should emit a single "format" event', function (done) {
@@ -25,6 +32,8 @@ describe('Decoder', function () {
       var decoder = new lame.Decoder();
       decoder.on('finish', done);
       file.pipe(decoder);
+
+      // enable "flow"
       decoder.resume();
     });
 
@@ -33,6 +42,8 @@ describe('Decoder', function () {
       var decoder = new lame.Decoder();
       decoder.on('end', done);
       file.pipe(decoder);
+
+      // enable "flow"
       decoder.resume();
     });
 
@@ -50,6 +61,40 @@ describe('Decoder', function () {
         done();
       });
       file.pipe(decoder);
+    });
+
+    it('should emit a single "id3v1" event', function (done) {
+      var file = fs.createReadStream(filename);
+      var decoder = new lame.Decoder();
+      decoder.on('id3v1', function (id3) {
+        assert.equal(title, id3.title.replace(/\0*$/, ''));
+        assert.equal(artist, id3.artist.replace(/\0*$/, ''));
+        assert.equal(album, id3.album.replace(/\0*$/, ''));
+        assert.equal(year, id3.year.replace(/\0*$/, ''));
+        assert.equal(comment, id3.comment.replace(/\0*$/, ''));
+        assert.equal(trackNumber, id3.trackNumber);
+        assert.equal(genre, id3.genre);
+        done();
+      });
+      file.pipe(decoder);
+
+      // enable "flow"
+      decoder.resume();
+    });
+
+    it('should emit a single "id3v2" event', function (done) {
+      var file = fs.createReadStream(filename);
+      var decoder = new lame.Decoder();
+      decoder.on('id3v2', function (id3) {
+        assert.equal(title, id3.title.replace(/\0*$/, ''));
+        assert.equal(artist, id3.artist.replace(/\0*$/, ''));
+        assert.equal(album, id3.album.replace(/\0*$/, ''));
+        assert.equal(year, id3.year.replace(/\0*$/, ''));
+        assert.equal(comment, id3.comment.replace(/\0*$/, ''));
+        done();
+      });
+      file.pipe(decoder);
+      // "flow" not necessary since ID3v2 tags are at the beginning of the file
     });
 
   });
