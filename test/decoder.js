@@ -17,6 +17,22 @@ describe('Decoder', function () {
     var genre = 88;
     var filename = path.resolve(fixtures, 'pipershut_lo.mp3');
 
+    it('should emit "readable" events', function (done) {
+      var file = fs.createReadStream(filename);
+      var count = 0;
+      var decoder = new lame.Decoder();
+      decoder.on('readable', function () {
+        count++;
+        var b;
+        while (null != (b = decoder.read()));
+      });
+      decoder.on('finish', function () {
+        assert(count > 0);
+        done();
+      });
+      file.pipe(decoder);
+    });
+
     it('should emit a single "format" event', function (done) {
       var file = fs.createReadStream(filename);
       var decoder = new lame.Decoder();
@@ -45,22 +61,6 @@ describe('Decoder', function () {
 
       // enable "flow"
       decoder.resume();
-    });
-
-    it('should emit "readable" events', function (done) {
-      var file = fs.createReadStream(filename);
-      var count = 0;
-      var decoder = new lame.Decoder();
-      decoder.on('readable', function () {
-        count++;
-        var b;
-        while (null != (b = decoder.read()));
-      });
-      decoder.on('finish', function () {
-        assert(count > 0);
-        done();
-      });
-      file.pipe(decoder);
     });
 
     it('should emit a single "id3v1" event', function (done) {
@@ -94,7 +94,9 @@ describe('Decoder', function () {
         done();
       });
       file.pipe(decoder);
-      // "flow" not necessary since ID3v2 tags are at the beginning of the file
+
+      // enable "flow"
+      decoder.resume();
     });
 
   });
