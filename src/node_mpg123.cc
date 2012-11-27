@@ -279,14 +279,39 @@ void node_mpg123_read_after (uv_work_t *req) {
 }
 
 
-/* TODO: async? */
 Handle<Value> node_mpg123_id3 (const Arguments& args) {
   UNWRAP_MH;
-  mpg123_id3v1 *v1;
-  mpg123_id3v2 *v2;
 
-  int r = mpg123_id3(mh, &v1, &v2);
+  id3_req *request = new id3_req;
+  request->mh = mh;
+  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[1]));
+  request->req.data = request;
+
+  uv_queue_work(uv_default_loop(), &request->req,
+      node_mpg123_id3_async,
+      node_mpg123_id3_after);
+
+  return Undefined();
+}
+
+void node_mpg123_id3_async (uv_work_t *req) {
+  id3_req *r = (id3_req *)req->data;
+  r->rtn = mpg123_id3(
+    r->mh,
+    &r->v1,
+    &r->v2
+  );
+}
+
+void node_mpg123_id3_after (uv_work_t *req) {
+  HandleScope scope;
+  id3_req *ireq = (id3_req *)req->data;
+
+  mpg123_id3v1 *v1 = ireq->v1;
+  mpg123_id3v2 *v2 = ireq->v2;
+  int r = ireq->rtn;
   Handle<Value> rtn;
+
   if (r == MPG123_OK) {
     if (v1 != NULL) {
       /* got id3v1 tags */
@@ -350,10 +375,23 @@ Handle<Value> node_mpg123_id3 (const Arguments& args) {
     } else {
       rtn = Null();
     }
-  } else {
-    rtn = Integer::New(r);
   }
-  return scope.Close(rtn);
+
+  Handle<Value> argv[2];
+  argv[0] = Integer::New(ireq->rtn);
+  argv[1] = rtn;
+
+  TryCatch try_catch;
+
+  ireq->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+
+  // cleanup
+  ireq->callback.Dispose();
+  delete ireq;
+
+  if (try_catch.HasCaught()) {
+    FatalException(try_catch);
+  }
 }
 
 
