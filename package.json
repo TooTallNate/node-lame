@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "mocha": "*",
-    "wav": "0",
+    "wav": "https://github.com/TooTallNate/node-wav/archive/master.tar.gz",
     "speaker": "0"
   },
   "scripts": {
