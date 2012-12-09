@@ -45,6 +45,13 @@ Handle<Value> PASTE(node_lame_set_, fn) (const Arguments& args) { \
   return scope.Close(Number::New(output)); \
 }
 
+/* enums used to set the type of the input PCM */
+typedef enum {
+  PCM_TYPE_DOUBLE = 3,
+  PCM_TYPE_FLOAT = 2,
+  PCM_TYPE_SHORT_INT = 1
+} pcm_type;
+
 
 /* struct that's used for async encoding */
 struct encode_req {
@@ -136,7 +143,7 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 void node_lame_encode_buffer_interleaved_async (uv_work_t *req) {
   encode_req *r = (encode_req *)req->data;
 
-  if(r->input_type == 1) {
+  if(r->input_type == PCM_TYPE_SHORT_INT) {
 
     //encoding short int inpur buffer
     r->rtn = lame_encode_buffer_interleaved(
@@ -146,7 +153,7 @@ void node_lame_encode_buffer_interleaved_async (uv_work_t *req) {
       r->output,
       r->output_size
     );
-  } else if(r->input_type == 2) {
+  } else if(r->input_type == PCM_TYPE_FLOAT) {
     
     //encoding float input buffer 
     r->rtn = lame_encode_buffer_interleaved_ieee_float(
@@ -156,7 +163,7 @@ void node_lame_encode_buffer_interleaved_async (uv_work_t *req) {
       r->output,
       r->output_size
     );
-  } else if(r->input_type == 3) {
+  } else if(r->input_type == PCM_TYPE_DOUBLE) {
 
     //encoding double input buffer
     r->rtn = lame_encode_buffer_interleaved_ieee_double(
@@ -405,7 +412,10 @@ void InitLame(Handle<Object> target) {
   CONST_INT(LAME_BADBITRATE);
   CONST_INT(LAME_BADSAMPFREQ);
   CONST_INT(LAME_INTERNALERROR);
-
+  //define PCM types
+  CONST_INT(PCM_TYPE_SHORT_INT)
+  CONST_INT(PCM_TYPE_FLOAT)
+  CONST_INT(PCM_TYPE_DOUBLE)
 
   // Functions
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
