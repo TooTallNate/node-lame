@@ -9,7 +9,7 @@ var encoder = new lame.Encoder({
 
 encoder.on('end', function() {
 
-	console.log('Encodeing ended!');
+	console.log('Encoding ended!');
 });
 
 var pcmInput = fs.createReadStream(path.resolve(__dirname, 'sample.float.pcm'));
