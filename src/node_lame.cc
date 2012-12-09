@@ -45,12 +45,20 @@ Handle<Value> PASTE(node_lame_set_, fn) (const Arguments& args) { \
   return scope.Close(Number::New(output)); \
 }
 
+/* enums used to set the type of the input PCM */
+typedef enum {
+  PCM_TYPE_DOUBLE = 3,
+  PCM_TYPE_FLOAT = 2,
+  PCM_TYPE_SHORT_INT = 1
+} pcm_type;
+
 
 /* struct that's used for async encoding */
 struct encode_req {
   uv_work_t req;
   lame_global_flags *gfp;
   unsigned char *input;
+  int input_type;
   int num_samples;
   unsigned char *output;
   int output_size;
@@ -103,20 +111,22 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 
   // the input buffer
   char *input = UnwrapPointer(args[1]);
-  int num_samples = args[2]->Int32Value();
+  int input_type = args[2]->Int32Value();
+  int num_samples = args[3]->Int32Value();
 
   // the output buffer
-  int out_offset = args[4]->Int32Value();
-  char *output = UnwrapPointer(args[3], out_offset);
-  int output_size = args[5]->Int32Value();
+  int out_offset = args[5]->Int32Value();
+  char *output = UnwrapPointer(args[4], out_offset);
+  int output_size = args[6]->Int32Value();
 
   encode_req *request = new encode_req;
   request->gfp = gfp;
   request->input = (unsigned char *)input;
+  request->input_type = input_type;
   request->num_samples = num_samples;
   request->output = (unsigned char *)output;
   request->output_size = output_size;
-  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[6]));
+  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[7]));
 
   // set a circular pointer so we can get the "encode_req" back later
   request->req.data = request;
@@ -132,13 +142,38 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 /* encode a buffer on the thread pool. */
 void node_lame_encode_buffer_interleaved_async (uv_work_t *req) {
   encode_req *r = (encode_req *)req->data;
-  r->rtn = lame_encode_buffer_interleaved(
-    r->gfp,
-    (short int *)r->input,
-    r->num_samples,
-    r->output,
-    r->output_size
-  );
+
+  if(r->input_type == PCM_TYPE_SHORT_INT) {
+
+    //encoding short int inpur buffer
+    r->rtn = lame_encode_buffer_interleaved(
+      r->gfp,
+      (short int *)r->input,
+      r->num_samples,
+      r->output,
+      r->output_size
+    );
+  } else if(r->input_type == PCM_TYPE_FLOAT) {
+    
+    //encoding float input buffer 
+    r->rtn = lame_encode_buffer_interleaved_ieee_float(
+      r->gfp,
+      (float *)r->input,
+      r->num_samples,
+      r->output,
+      r->output_size
+    );
+  } else if(r->input_type == PCM_TYPE_DOUBLE) {
+
+    //encoding double input buffer
+    r->rtn = lame_encode_buffer_interleaved_ieee_double(
+      r->gfp,
+      (double *)r->input,
+      r->num_samples,
+      r->output,
+      r->output_size
+    );
+  }
 }
 
 void node_lame_encode_buffer_interleaved_after (uv_work_t *req) {
@@ -377,7 +412,10 @@ void InitLame(Handle<Object> target) {
   CONST_INT(LAME_BADBITRATE);
   CONST_INT(LAME_BADSAMPFREQ);
   CONST_INT(LAME_INTERNALERROR);
-
+  //define PCM types
+  CONST_INT(PCM_TYPE_SHORT_INT)
+  CONST_INT(PCM_TYPE_FLOAT)
+  CONST_INT(PCM_TYPE_DOUBLE)
 
   // Functions
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
