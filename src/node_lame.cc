@@ -190,10 +190,9 @@ Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
   // set a circular pointer so we can get the "encode_req" back later
   request->req.data = request;
 
-  // we cheat and use the same "after" function as regular encoding
   uv_queue_work(uv_default_loop(), &request->req,
       node_lame_encode_flush_nogap_async,
-      node_lame_encode_buffer_interleaved_after);
+      node_lame_encode_flush_nogap_after);
 
   return Undefined();
 }

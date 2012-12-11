@@ -28,5 +28,6 @@ void node_lame_encode_buffer_interleaved_async (uv_work_t *);
 void node_lame_encode_buffer_interleaved_after (uv_work_t *);
 
 void node_lame_encode_flush_nogap_async (uv_work_t *);
+#define node_lame_encode_flush_nogap_after node_lame_encode_buffer_interleaved_after
 
 } // nodelame namespace
