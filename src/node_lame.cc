@@ -18,6 +18,7 @@
 #include <node.h>
 #include <node_buffer.h>
 #include "node_pointer.h"
+#include "node_lame.h"
 #include "lame.h"
 
 using namespace v8;
@@ -44,27 +45,6 @@ Handle<Value> PASTE(node_lame_set_, fn) (const Arguments& args) { \
   int output = PASTE(lame_set_, fn)(gfp, input); \
   return scope.Close(Number::New(output)); \
 }
-
-/* enums used to set the type of the input PCM */
-typedef enum {
-  PCM_TYPE_SHORT_INT,
-  PCM_TYPE_FLOAT,
-  PCM_TYPE_DOUBLE
-} pcm_type;
-
-
-/* struct that's used for async encoding */
-struct encode_req {
-  uv_work_t req;
-  lame_global_flags *gfp;
-  unsigned char *input;
-  int input_type;
-  int num_samples;
-  unsigned char *output;
-  int output_size;
-  int rtn;
-  Persistent<Function> callback;
-};
 
 
 /* get_lame_version() */
@@ -103,9 +83,6 @@ Handle<Value> node_lame_init (const Arguments& args) {
 
 /* lame_encode_buffer_interleaved()
  * The main encoding function */
-void node_lame_encode_buffer_interleaved_async (uv_work_t *);
-void node_lame_encode_buffer_interleaved_after (uv_work_t *);
-
 Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
   UNWRAP_GFP;
 
@@ -143,9 +120,8 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 void node_lame_encode_buffer_interleaved_async (uv_work_t *req) {
   encode_req *r = (encode_req *)req->data;
 
-  if(r->input_type == PCM_TYPE_SHORT_INT) {
-
-    //encoding short int inpur buffer
+  if (r->input_type == PCM_TYPE_SHORT_INT) {
+    // encoding short int inpur buffer
     r->rtn = lame_encode_buffer_interleaved(
       r->gfp,
       (short int *)r->input,
@@ -153,9 +129,8 @@ void node_lame_encode_buffer_interleaved_async (uv_work_t *req) {
       r->output,
       r->output_size
     );
-  } else if(r->input_type == PCM_TYPE_FLOAT) {
-    
-    //encoding float input buffer 
+  } else if (r->input_type == PCM_TYPE_FLOAT) {
+    // encoding float input buffer
     r->rtn = lame_encode_buffer_interleaved_ieee_float(
       r->gfp,
       (float *)r->input,
@@ -163,9 +138,8 @@ void node_lame_encode_buffer_interleaved_async (uv_work_t *req) {
       r->output,
       r->output_size
     );
-  } else if(r->input_type == PCM_TYPE_DOUBLE) {
-
-    //encoding double input buffer
+  } else if (r->input_type == PCM_TYPE_DOUBLE) {
+    // encoding double input buffer
     r->rtn = lame_encode_buffer_interleaved_ieee_double(
       r->gfp,
       (double *)r->input,
@@ -199,8 +173,6 @@ void node_lame_encode_buffer_interleaved_after (uv_work_t *req) {
 
 
 /* lame_encode_flush_nogap() */
-void node_lame_encode_flush_nogap_async (uv_work_t *);
-
 Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
   UNWRAP_GFP;
 
