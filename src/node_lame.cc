@@ -47,9 +47,9 @@ Handle<Value> PASTE(node_lame_set_, fn) (const Arguments& args) { \
 
 /* enums used to set the type of the input PCM */
 typedef enum {
-  PCM_TYPE_DOUBLE = 3,
-  PCM_TYPE_FLOAT = 2,
-  PCM_TYPE_SHORT_INT = 1
+  PCM_TYPE_SHORT_INT,
+  PCM_TYPE_FLOAT,
+  PCM_TYPE_DOUBLE
 } pcm_type;
 
 
