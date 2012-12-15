@@ -186,7 +186,7 @@ Handle<Value> node_mpg123_feed (const Arguments& args) {
 
   uv_queue_work(uv_default_loop(), &request->req,
       node_mpg123_feed_async,
-      node_mpg123_feed_after);
+      (uv_after_work_cb)node_mpg123_feed_after);
 
   return Undefined();
 }
@@ -238,7 +238,7 @@ Handle<Value> node_mpg123_read (const Arguments& args) {
 
   uv_queue_work(uv_default_loop(), &request->req,
       node_mpg123_read_async,
-      node_mpg123_read_after);
+      (uv_after_work_cb)node_mpg123_read_after);
 
   return Undefined();
 }
@@ -289,7 +289,7 @@ Handle<Value> node_mpg123_id3 (const Arguments& args) {
 
   uv_queue_work(uv_default_loop(), &request->req,
       node_mpg123_id3_async,
-      node_mpg123_id3_after);
+      (uv_after_work_cb)node_mpg123_id3_after);
 
   return Undefined();
 }

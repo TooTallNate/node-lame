@@ -110,7 +110,7 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 
   uv_queue_work(uv_default_loop(), &request->req,
       node_lame_encode_buffer_interleaved_async,
-      node_lame_encode_buffer_interleaved_after);
+      (uv_after_work_cb)node_lame_encode_buffer_interleaved_after);
 
   return Undefined();
 }
@@ -192,7 +192,7 @@ Handle<Value> node_lame_encode_flush_nogap (const Arguments& args) {
 
   uv_queue_work(uv_default_loop(), &request->req,
       node_lame_encode_flush_nogap_async,
-      node_lame_encode_flush_nogap_after);
+      (uv_after_work_cb)node_lame_encode_flush_nogap_after);
 
   return Undefined();
 }
