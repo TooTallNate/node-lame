@@ -23,9 +23,7 @@
     "readable-stream": "0"
   },
   "devDependencies": {
-    "mocha": "*",
-    "wav": "0",
-    "speaker": "0"
+    "mocha": "*"
   },
   "scripts": {
     "test": "mocha --reporter spec"
