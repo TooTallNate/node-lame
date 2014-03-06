@@ -83,74 +83,112 @@ Handle<Value> node_lame_init (const Arguments& args) {
 
 /* lame_encode_buffer_interleaved()
  * The main encoding function */
-Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
+Handle<Value> node_lame_encode_buffer (const Arguments& args) {
   UNWRAP_GFP;
 
   // the input buffer
   char *input = UnwrapPointer(args[1]);
   int input_type = args[2]->Int32Value();
-  int num_samples = args[3]->Int32Value();
+  int channels = args[3]->Int32Value();
+  int num_samples = args[4]->Int32Value();
 
   // the output buffer
-  int out_offset = args[5]->Int32Value();
-  char *output = UnwrapPointer(args[4], out_offset);
-  int output_size = args[6]->Int32Value();
+  int out_offset = args[6]->Int32Value();
+  char *output = UnwrapPointer(args[5], out_offset);
+  int output_size = args[7]->Int32Value();
 
   encode_req *request = new encode_req;
   request->gfp = gfp;
   request->input = (unsigned char *)input;
   request->input_type = input_type;
+  request->channels = channels;
   request->num_samples = num_samples;
   request->output = (unsigned char *)output;
   request->output_size = output_size;
-  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[7]));
+  request->callback = Persistent<Function>::New(Local<Function>::Cast(args[8]));
 
   // set a circular pointer so we can get the "encode_req" back later
   request->req.data = request;
 
   uv_queue_work(uv_default_loop(), &request->req,
-      node_lame_encode_buffer_interleaved_async,
-      (uv_after_work_cb)node_lame_encode_buffer_interleaved_after);
+      node_lame_encode_buffer_async,
+      (uv_after_work_cb)node_lame_encode_buffer_after);
 
   return Undefined();
 }
 
 
 /* encode a buffer on the thread pool. */
-void node_lame_encode_buffer_interleaved_async (uv_work_t *req) {
+void node_lame_encode_buffer_async (uv_work_t *req) {
   encode_req *r = (encode_req *)req->data;
 
   if (r->input_type == PCM_TYPE_SHORT_INT) {
-    // encoding short int inpur buffer
-    r->rtn = lame_encode_buffer_interleaved(
-      r->gfp,
-      (short int *)r->input,
-      r->num_samples,
-      r->output,
-      r->output_size
-    );
+    if (r->channels > 1) {
+      // encoding short int interleaved input buffer
+      r->rtn = lame_encode_buffer_interleaved(
+        r->gfp,
+        (short int *)r->input,
+        r->num_samples,
+        r->output,
+        r->output_size
+      );
+    } else {
+      // encoding short int input buffer
+      r->rtn = lame_encode_buffer(
+        r->gfp,
+        (short int *)r->input,
+        NULL,
+        r->num_samples,
+        r->output,
+        r->output_size
+      );
+    }
   } else if (r->input_type == PCM_TYPE_FLOAT) {
-    // encoding float input buffer
-    r->rtn = lame_encode_buffer_interleaved_ieee_float(
-      r->gfp,
-      (float *)r->input,
-      r->num_samples,
-      r->output,
-      r->output_size
-    );
+    if (r->channels > 1) {
+      // encoding float interleaved input buffer
+      r->rtn = lame_encode_buffer_interleaved_ieee_float(
+        r->gfp,
+        (float *)r->input,
+        r->num_samples,
+        r->output,
+        r->output_size
+      );
+    } else {
+      // encoding float input buffer
+      r->rtn = lame_encode_buffer_ieee_float(
+        r->gfp,
+        (float *)r->input,
+        NULL,
+        r->num_samples,
+        r->output,
+        r->output_size
+      );
+    }
   } else if (r->input_type == PCM_TYPE_DOUBLE) {
-    // encoding double input buffer
-    r->rtn = lame_encode_buffer_interleaved_ieee_double(
-      r->gfp,
-      (double *)r->input,
-      r->num_samples,
-      r->output,
-      r->output_size
-    );
+    if (r->channels > 1) {
+      // encoding double interleaved input buffer
+      r->rtn = lame_encode_buffer_interleaved_ieee_double(
+        r->gfp,
+        (double *)r->input,
+        r->num_samples,
+        r->output,
+        r->output_size
+      );
+    } else {
+      // encoding double input buffer
+      r->rtn = lame_encode_buffer_ieee_double(
+        r->gfp,
+        (double *)r->input,
+        NULL,
+        r->num_samples,
+        r->output,
+        r->output_size
+      );
+    }
   }
 }
 
-void node_lame_encode_buffer_interleaved_after (uv_work_t *req) {
+void node_lame_encode_buffer_after (uv_work_t *req) {
   HandleScope scope;
 
   encode_req *r = (encode_req *)req->data;
@@ -397,7 +435,7 @@ void InitLame(Handle<Object> target) {
   NODE_SET_METHOD(target, "get_lame_version", node_get_lame_version);
   NODE_SET_METHOD(target, "get_lame_os_bitness", node_get_lame_os_bitness);
   NODE_SET_METHOD(target, "lame_close", node_lame_close);
-  NODE_SET_METHOD(target, "lame_encode_buffer_interleaved", node_lame_encode_buffer_interleaved);
+  NODE_SET_METHOD(target, "lame_encode_buffer", node_lame_encode_buffer);
   NODE_SET_METHOD(target, "lame_encode_flush_nogap", node_lame_encode_flush_nogap);
   NODE_SET_METHOD(target, "lame_get_id3v1_tag", node_lame_get_id3v1_tag);
   NODE_SET_METHOD(target, "lame_get_id3v2_tag", node_lame_get_id3v2_tag);
