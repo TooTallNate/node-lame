@@ -88,7 +88,7 @@ Handle<Value> node_lame_encode_buffer_interleaved (const Arguments& args) {
 
   // the input buffer
   char *input = UnwrapPointer(args[1]);
-  int input_type = args[2]->Int32Value();
+  pcm_type input_type = static_cast<pcm_type>(args[2]->Int32Value());
   int num_samples = args[3]->Int32Value();
 
   // the output buffer

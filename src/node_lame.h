@@ -16,7 +16,7 @@ struct encode_req {
   uv_work_t req;
   lame_global_flags *gfp;
   unsigned char *input;
-  int input_type;
+  pcm_type input_type;
   int num_samples;
   unsigned char *output;
   int output_size;
