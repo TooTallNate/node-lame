@@ -67,11 +67,11 @@ describe('Decoder', function () {
       var file = fs.createReadStream(filename);
       var decoder = new lame.Decoder();
       decoder.on('id3v1', function (id3) {
-        assert.equal(title, id3.title.replace(/\0*$/, ''));
-        assert.equal(artist, id3.artist.replace(/\0*$/, ''));
-        assert.equal(album, id3.album.replace(/\0*$/, ''));
-        assert.equal(year, id3.year.replace(/\0*$/, ''));
-        assert.equal(comment, id3.comment.replace(/\0*$/, ''));
+        assert.equal(title, id3.title);
+        assert.equal(artist, id3.artist);
+        assert.equal(album, id3.album);
+        assert.equal(year, id3.year);
+        assert.equal(comment, id3.comment);
         assert.equal(trackNumber, id3.trackNumber);
         assert.equal(genre, id3.genre);
         done();
@@ -86,11 +86,11 @@ describe('Decoder', function () {
       var file = fs.createReadStream(filename);
       var decoder = new lame.Decoder();
       decoder.on('id3v2', function (id3) {
-        assert.equal(title, id3.title.replace(/\0*$/, ''));
-        assert.equal(artist, id3.artist.replace(/\0*$/, ''));
-        assert.equal(album, id3.album.replace(/\0*$/, ''));
-        assert.equal(year, id3.year.replace(/\0*$/, ''));
-        assert.equal(comment, id3.comment.replace(/\0*$/, ''));
+        assert.equal(title, id3.title);
+        assert.equal(artist, id3.artist);
+        assert.equal(album, id3.album);
+        assert.equal(year, id3.year);
+        assert.equal(comment, id3.comment);
         done();
       });
       file.pipe(decoder);
