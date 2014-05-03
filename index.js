@@ -10,3 +10,11 @@ exports.Decoder = require('./lib/decoder');
  */
 
 exports.Encoder = require('./lib/encoder');
+
+/*
+ * Channel Modes
+ */
+exports.STEREO = 0;
+exports.JOINTSTEREO = 1;
+exports.DUALCHANNEL = 2;
+exports.MONO = 3;
