@@ -1,5 +1,5 @@
 var fs = require('fs');
-var lame = require('lame');
+var lame = require('../');
 var Speaker = require('speaker');
 
 fs.createReadStream(process.argv[2])
