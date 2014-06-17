@@ -18,9 +18,9 @@
   },
   "main": "./index.js",
   "dependencies": {
-    "bindings": "*",
-    "debug": "*",
-    "readable-stream": "1.0.27-1"
+    "bindings": "~1.2.0",
+    "debug": "~1.0.0",
+    "readable-stream": "1.0"
   },
   "devDependencies": {
     "mocha": "*"
