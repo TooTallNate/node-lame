@@ -1,7 +1,7 @@
 node-lame
 =========
 ### NodeJS native bindings to libmp3lame & libmpg123
-[![Build Status](https://travis-ci.org/TooTallNate/node-lame.png?branch=master)](https://travis-ci.org/TooTallNate/node-lame)
+[![Build Status](https://travis-ci.org/TooTallNate/node-lame.svg?branch=master)](https://travis-ci.org/TooTallNate/node-lame)
 
 For all your async streaming MP3 encoding/decoding needs, there's `node-lame`!
 This module hooks into libmp3lame, the library that the `lame` command uses, to
