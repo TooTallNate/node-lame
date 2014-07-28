@@ -4,6 +4,7 @@ var path = require('path');
 var lame = require('../');
 var assert = require('assert');
 var fixtures = path.resolve(__dirname, 'fixtures');
+var outputName = path.resolve(__dirname, 'output.wav');
 
 describe('Decoder', function () {
 
@@ -19,18 +20,18 @@ describe('Decoder', function () {
 
     it('should emit "readable" events', function (done) {
       var file = fs.createReadStream(filename);
+      var output = fs.createWriteStream(outputName);
       var count = 0;
       var decoder = new lame.Decoder();
       decoder.on('readable', function () {
         count++;
-        var b;
-        while (null != (b = decoder.read()));
       });
       decoder.on('finish', function () {
         assert(count > 0);
+        fs.unlinkSync(outputName);
         done();
       });
-      file.pipe(decoder);
+      file.pipe(decoder).pipe(output);
     });
 
     it('should emit a single "format" event', function (done) {
@@ -45,22 +46,21 @@ describe('Decoder', function () {
 
     it('should emit a single "finish" event', function (done) {
       var file = fs.createReadStream(filename);
+      var output = fs.createWriteStream(outputName);
       var decoder = new lame.Decoder();
       decoder.on('finish', done);
-      file.pipe(decoder);
-
-      // enable "flow"
-      decoder.resume();
+      file.pipe(decoder).pipe(output);
     });
 
     it('should emit a single "end" event', function (done) {
       var file = fs.createReadStream(filename);
+      var output = fs.createWriteStream(outputName);
       var decoder = new lame.Decoder();
-      decoder.on('end', done);
-      file.pipe(decoder);
-
-      // enable "flow"
-      decoder.resume();
+      decoder.on('end', function () {
+        fs.unlinkSync(outputName);
+        done();
+      });
+      file.pipe(decoder).pipe(output);
     });
 
     it('should emit a single "id3v1" event', function (done) {
