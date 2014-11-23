@@ -16,6 +16,7 @@
 
 #include <v8.h>
 #include <node.h>
+#include "nan.h"
 
 using namespace v8;
 using namespace node;
@@ -26,7 +27,7 @@ void InitLame(Handle<Object>);
 void InitMPG123(Handle<Object>);
 
 void Initialize(Handle<Object> target) {
-  HandleScope scope;
+  NanScope();
 
   InitLame(target);
   InitMPG123(target);
