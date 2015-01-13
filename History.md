@@ -1,4 +1,10 @@
 
+1.1.2 / 2015-01-13
+==================
+
+  * package: allow any "debug" v2
+  * Add support for node 0.11.13 via nan (#34, @yhbyun)
+
 1.1.1 / 2014-07-28
 ==================
 
