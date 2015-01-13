@@ -19,7 +19,7 @@
   "main": "./index.js",
   "dependencies": {
     "bindings": "~1.2.0",
-    "debug": "~1.0.0",
+    "debug": "2",
     "readable-stream": "1.0",
     "nan": "~1.2.0"
   },
