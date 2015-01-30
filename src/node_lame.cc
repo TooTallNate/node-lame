@@ -390,7 +390,7 @@ void InitLame(Handle<Object> target) {
 
   /* sizeof's */
 #define SIZEOF(value) \
-  target->Set(NanNew<String>("sizeof_" #value), NanNew<Integer>(sizeof(value)), \
+  target->ForceSet(NanNew<String>("sizeof_" #value), NanNew<Integer>(sizeof(value)), \
       static_cast<PropertyAttribute>(ReadOnly|DontDelete))
   SIZEOF(short);
   SIZEOF(int);
@@ -399,7 +399,7 @@ void InitLame(Handle<Object> target) {
 
 
 #define CONST_INT(value) \
-  target->Set(NanNew<String>(#value), NanNew<Integer>(value), \
+  target->ForceSet(NanNew<String>(#value), NanNew<Integer>(value), \
       static_cast<PropertyAttribute>(ReadOnly|DontDelete));
 
   // vbr_mode_e

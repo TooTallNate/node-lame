@@ -410,7 +410,7 @@ void InitMPG123(Handle<Object> target) {
   NanScope();
 
 #define CONST_INT(value) \
-  target->Set(NanNew<String>(#value), NanNew<Integer>(value), \
+  target->ForceSet(NanNew<String>(#value), NanNew<Integer>(value), \
       static_cast<PropertyAttribute>(ReadOnly|DontDelete));
 
   // mpg123_errors
