@@ -270,7 +270,7 @@ void node_mpg123_read_after (uv_work_t *req) {
 
   Handle<Value> argv[3];
   argv[0] = NanNew<Integer>(r->rtn);
-  argv[1] = NanNew<Integer>(r->done);
+  argv[1] = NanNew<Integer>(static_cast<uint32_t>(r->done));
   argv[2] = NanNew<Integer>(r->meta);
 
   TryCatch try_catch;
