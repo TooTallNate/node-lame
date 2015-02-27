@@ -259,7 +259,7 @@ NAN_METHOD(node_lame_get_id3v1_tag) {
   unsigned char *buf = (unsigned char *)Buffer::Data(outbuf);
   size_t buf_size = (size_t)Buffer::Length(outbuf);
 
-  size_t b = lame_get_id3v1_tag(gfp, buf, buf_size);
+  uint32_t b = lame_get_id3v1_tag(gfp, buf, buf_size);
   NanReturnValue(NanNew<Integer>(b));
 }
 
@@ -276,7 +276,7 @@ NAN_METHOD(node_lame_get_id3v2_tag) {
   unsigned char *buf = (unsigned char *)Buffer::Data(outbuf);
   size_t buf_size = (size_t)Buffer::Length(outbuf);
 
-  size_t b = lame_get_id3v2_tag(gfp, buf, buf_size);
+  uint32_t b = lame_get_id3v2_tag(gfp, buf, buf_size);
   NanReturnValue(NanNew<Integer>(b));
 }
 
@@ -390,7 +390,7 @@ void InitLame(Handle<Object> target) {
 
   /* sizeof's */
 #define SIZEOF(value) \
-  target->ForceSet(NanNew<String>("sizeof_" #value), NanNew<Integer>(sizeof(value)), \
+  target->ForceSet(NanNew<String>("sizeof_" #value), NanNew<Integer>(uint32_t (sizeof(value))), \
       static_cast<PropertyAttribute>(ReadOnly|DontDelete))
   SIZEOF(short);
   SIZEOF(int);
