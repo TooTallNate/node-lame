@@ -10,7 +10,7 @@
     "encode",
     "decode"
   ],
-  "version": "1.1.2",
+  "version": "1.2.0",
   "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
   "repository": {
     "type": "git",

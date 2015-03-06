@@ -1,4 +1,12 @@
 
+1.2.0 / 2015-03-06
+==================
+
+  * node 0.12 support
+  * package: update "nan" to v1.6.2
+  * travis: test node v0.11.x
+  * Build with NodeWebkit 0.11.x
+
 1.1.2 / 2015-01-13
 ==================
 
