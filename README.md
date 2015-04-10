@@ -35,7 +35,7 @@ var encoder = new lame.Encoder({
   // input
   channels: 2,        // 2 channels (left and right)
   bitDepth: 16,       // 16-bit samples
-  sampleRate: 44100   // 44,100 Hz sample rate
+  sampleRate: 44100,  // 44,100 Hz sample rate
 
   // output
   bitRate: 128,
