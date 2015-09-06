@@ -24,12 +24,13 @@
 
 using namespace v8;
 using namespace node;
+using namespace Nan;
 
 namespace nodelame {
 
 #define UNWRAP_MH \
-  NanScope(); \
-  mpg123_handle *mh = reinterpret_cast<mpg123_handle *>(UnwrapPointer(args[0]));
+  Nan::HandleScope scope; \
+  mpg123_handle *mh = reinterpret_cast<mpg123_handle *>(UnwrapPointer(info[0]));
 
 /* not a macro because we're passing function calls in here */
 inline int min (int a, int b) {
@@ -37,72 +38,64 @@ inline int min (int a, int b) {
 }
 
 NAN_METHOD(node_mpg123_init) {
-  NanScope();
-  NanReturnValue(NanNew<Integer>(mpg123_init()));
+  info.GetReturnValue().Set(Nan::New<Integer>(mpg123_init()));
 }
 
 
 NAN_METHOD(node_mpg123_exit) {
-  NanScope();
   mpg123_exit();
-  NanReturnUndefined();
 }
 
 
 NAN_METHOD(node_mpg123_new) {
-  NanScope();
 
   // TODO: Accept an input decoder String
   int error = MPG123_OK;
   mpg123_handle *mh = mpg123_new(NULL, &error);
 
-  Local<Value> rtn;
   if (error == MPG123_OK) {
-    rtn = NanNew<Value>(WrapPointer(mh));
+    info.GetReturnValue().Set(WrapPointer(mh).ToLocalChecked());
   } else {
-    rtn = NanNew<Integer>(error);
+    info.GetReturnValue().Set(Nan::New<Integer>(error));
   }
-  NanReturnValue(rtn);
 }
 
 
 NAN_METHOD(node_mpg123_current_decoder) {
   UNWRAP_MH;
   const char *decoder = mpg123_current_decoder(mh);
-  NanReturnValue(NanNew<String>(decoder));
+  info.GetReturnValue().Set(Nan::New<String>(decoder).ToLocalChecked());
 }
 
 
 NAN_METHOD(node_mpg123_supported_decoders) {
-  NanScope();
   const char **decoders = mpg123_supported_decoders();
   int i = 0;
-  Handle<Array> rtn = NanNew<Array>();
+  v8::Local<Array> rtn = Nan::New<Array>();
   while (*decoders != NULL) {
-    rtn->Set(i++, NanNew<String>(*decoders));
+    Nan::Set(rtn, i++, Nan::New<String>(*decoders).ToLocalChecked());
     decoders++;
   }
-  NanReturnValue(rtn);
+  info.GetReturnValue().Set(rtn);
 }
 
 
 NAN_METHOD(node_mpg123_decoders) {
-  NanScope();
   const char **decoders = mpg123_decoders();
   int i = 0;
-  Handle<Array> rtn = NanNew<Array>();
+  v8::Local<Array> rtn = Nan::New<Array>();
   while (*decoders != NULL) {
-    rtn->Set(i++, NanNew<String>(*decoders));
+    Nan::Set(rtn, i++, Nan::New<String>(*decoders).ToLocalChecked());
     decoders++;
   }
-  NanReturnValue(rtn);
+  info.GetReturnValue().Set(rtn);
 }
 
 
 NAN_METHOD(node_mpg123_open_feed) {
   UNWRAP_MH;
   int ret = mpg123_open_feed(mh);
-  NanReturnValue(NanNew<Integer>(ret));
+  info.GetReturnValue().Set(Nan::New<Integer>(ret));
 }
 
 
@@ -115,65 +108,64 @@ NAN_METHOD(node_mpg123_getformat) {
   Local<Value> rtn;
   ret = mpg123_getformat(mh, &rate, &channels, &encoding);
   if (ret == MPG123_OK) {
-    Local<Object> o = NanNew<Object>();
-    o->Set(NanNew<String>("raw_encoding"), NanNew<Number>(encoding));
-    o->Set(NanNew<String>("sampleRate"), NanNew<Number>(rate));
-    o->Set(NanNew<String>("channels"), NanNew<Number>(channels));
-    o->Set(NanNew<String>("signed"), NanNew<Boolean>(encoding & MPG123_ENC_SIGNED));
-    o->Set(NanNew<String>("float"), NanNew<Boolean>(encoding & MPG123_ENC_FLOAT));
-    o->Set(NanNew<String>("ulaw"), NanNew<Boolean>(encoding & MPG123_ENC_ULAW_8));
-    o->Set(NanNew<String>("alaw"), NanNew<Boolean>(encoding & MPG123_ENC_ALAW_8));
+    Local<Object> o = Nan::New<Object>();
+    Nan::Set(o, Nan::New<String>("raw_encoding").ToLocalChecked(), Nan::New<Number>(encoding));
+    Nan::Set(o, Nan::New<String>("sampleRate").ToLocalChecked(), Nan::New<Number>(rate));
+    Nan::Set(o, Nan::New<String>("channels").ToLocalChecked(), Nan::New<Number>(channels));
+    Nan::Set(o, Nan::New<String>("signed").ToLocalChecked(), Nan::New<Boolean>(encoding & MPG123_ENC_SIGNED));
+    Nan::Set(o, Nan::New<String>("float").ToLocalChecked(), Nan::New<Boolean>(encoding & MPG123_ENC_FLOAT));
+    Nan::Set(o, Nan::New<String>("ulaw").ToLocalChecked(), Nan::New<Boolean>(encoding & MPG123_ENC_ULAW_8));
+    Nan::Set(o, Nan::New<String>("alaw").ToLocalChecked(), Nan::New<Boolean>(encoding & MPG123_ENC_ALAW_8));
     if (encoding & MPG123_ENC_8)
-      o->Set(NanNew<String>("bitDepth"), NanNew<Integer>(8));
+      Nan::Set(o, Nan::New<String>("bitDepth").ToLocalChecked(), Nan::New<Integer>(8));
     else if (encoding & MPG123_ENC_16)
-      o->Set(NanNew<String>("bitDepth"), NanNew<Integer>(16));
+      Nan::Set(o, Nan::New<String>("bitDepth").ToLocalChecked(), Nan::New<Integer>(16));
     else if (encoding & MPG123_ENC_24)
-      o->Set(NanNew<String>("bitDepth"), NanNew<Integer>(24));
+      Nan::Set(o, Nan::New<String>("bitDepth").ToLocalChecked(), Nan::New<Integer>(24));
     else if (encoding & MPG123_ENC_32 || encoding & MPG123_ENC_FLOAT_32)
-      o->Set(NanNew<String>("bitDepth"), NanNew<Integer>(32));
+      Nan::Set(o, Nan::New<String>("bitDepth").ToLocalChecked(), Nan::New<Integer>(32));
     else if (encoding & MPG123_ENC_FLOAT_64)
-      o->Set(NanNew<String>("bitDepth"), NanNew<Integer>(64));
+      Nan::Set(o, Nan::New<String>("bitDepth").ToLocalChecked(), Nan::New<Integer>(64));
     rtn = o;
   } else {
-    rtn = NanNew<Integer>(ret);
+    rtn = Nan::New<Integer>(ret);
   }
-  NanReturnValue(rtn);
+  info.GetReturnValue().Set(rtn);
 }
 
 
 NAN_METHOD(node_mpg123_safe_buffer) {
-  NanScope();
-  NanReturnValue(NanNew<Number>(mpg123_safe_buffer()));
+  info.GetReturnValue().Set(Nan::New<Number>(mpg123_safe_buffer()));
 }
 
 
 NAN_METHOD(node_mpg123_outblock) {
   UNWRAP_MH;
-  NanReturnValue(NanNew<Number>(mpg123_outblock(mh)));
+  info.GetReturnValue().Set(Nan::New<Number>(mpg123_outblock(mh)));
 }
 
 
 NAN_METHOD(node_mpg123_framepos) {
   UNWRAP_MH;
-  NanReturnValue(NanNew<Number>(mpg123_framepos(mh)));
+  info.GetReturnValue().Set(Nan::New<Number>(mpg123_framepos(mh)));
 }
 
 
 NAN_METHOD(node_mpg123_tell) {
   UNWRAP_MH;
-  NanReturnValue(NanNew<Number>(mpg123_tell(mh)));
+  info.GetReturnValue().Set(Nan::New<Number>(mpg123_tell(mh)));
 }
 
 
 NAN_METHOD(node_mpg123_tellframe) {
   UNWRAP_MH;
-  NanReturnValue(NanNew<Number>(mpg123_tellframe(mh)));
+  info.GetReturnValue().Set(Nan::New<Number>(mpg123_tellframe(mh)));
 }
 
 
 NAN_METHOD(node_mpg123_tell_stream) {
   UNWRAP_MH;
-  NanReturnValue(NanNew<Number>(mpg123_tell_stream(mh)));
+  info.GetReturnValue().Set(Nan::New<Number>(mpg123_tell_stream(mh)));
 }
 
 
@@ -181,22 +173,20 @@ NAN_METHOD(node_mpg123_feed) {
   UNWRAP_MH;
 
   // input buffer
-  char *input = UnwrapPointer(args[1]);
-  size_t size = args[2]->Int32Value();
+  char *input = UnwrapPointer(info[1]);
+  size_t size = Nan::To<int32_t>(info[2]).FromMaybe(0);
 
   feed_req *request = new feed_req;
   request->mh = mh;
   request->in = (const unsigned char *)input;
   request->size = size;
-  NanAssignPersistent(request->callback, args[3].As<Function>());
+  request->callback.Reset(info[3].As<Function>());
 
   request->req.data = request;
 
   uv_queue_work(uv_default_loop(), &request->req,
       node_mpg123_feed_async,
       (uv_after_work_cb)node_mpg123_feed_after);
-
-  NanReturnUndefined();
 }
 
 void node_mpg123_feed_async (uv_work_t *req) {
@@ -209,18 +199,18 @@ void node_mpg123_feed_async (uv_work_t *req) {
 }
 
 void node_mpg123_feed_after (uv_work_t *req) {
-  NanScope();
+  Nan::HandleScope scope;
   feed_req *r = (feed_req *)req->data;
 
   Handle<Value> argv[1];
-  argv[0] = NanNew<Integer>(r->rtn);
+  argv[0] = Nan::New<Integer>(r->rtn);
 
-  TryCatch try_catch;
+  Nan::TryCatch try_catch;
 
-  NanNew(r->callback)->Call(NanGetCurrentContext()->Global(), 1, argv);
+  Nan::New(r->callback)->Call(Nan::GetCurrentContext()->Global(), 1, argv);
 
   // cleanup
-  NanDisposePersistent(r->callback);
+  r->callback.Reset();
   delete r;
 
   if (try_catch.HasCaught()) {
@@ -233,22 +223,20 @@ NAN_METHOD(node_mpg123_read) {
   UNWRAP_MH;
 
   // output buffer
-  char *output = UnwrapPointer(args[1]);
-  size_t size = args[2]->Int32Value();
+  char *output = UnwrapPointer(info[1]);
+  size_t size = Nan::To<int32_t>(info[2]).FromMaybe(0);
 
   read_req *request = new read_req;
   request->mh = mh;
   request->out = (unsigned char *)output;
   request->size = size;
   request->done = 0;
-  NanAssignPersistent(request->callback, args[3].As<Function>());
+  request->callback.Reset(info[3].As<Function>());
   request->req.data = request;
 
   uv_queue_work(uv_default_loop(), &request->req,
       node_mpg123_read_async,
       (uv_after_work_cb)node_mpg123_read_after);
-
-  NanReturnUndefined();
 }
 
 void node_mpg123_read_async (uv_work_t *req) {
@@ -265,20 +253,20 @@ void node_mpg123_read_async (uv_work_t *req) {
 }
 
 void node_mpg123_read_after (uv_work_t *req) {
-  NanScope();
+  Nan::HandleScope scope;
   read_req *r = (read_req *)req->data;
 
   Handle<Value> argv[3];
-  argv[0] = NanNew<Integer>(r->rtn);
-  argv[1] = NanNew<Integer>(static_cast<uint32_t>(r->done));
-  argv[2] = NanNew<Integer>(r->meta);
+  argv[0] = Nan::New<Integer>(r->rtn);
+  argv[1] = Nan::New<Integer>(static_cast<uint32_t>(r->done));
+  argv[2] = Nan::New<Integer>(r->meta);
 
-  TryCatch try_catch;
+  Nan::TryCatch try_catch;
 
-  NanNew(r->callback)->Call(NanGetCurrentContext()->Global(), 3, argv);
+  Nan::New(r->callback)->Call(Nan::GetCurrentContext()->Global(), 3, argv);
 
   // cleanup
-  NanDisposePersistent(r->callback);
+  r->callback.Reset();
   delete r;
 
   if (try_catch.HasCaught()) {
@@ -292,14 +280,12 @@ NAN_METHOD(node_mpg123_id3) {
 
   id3_req *request = new id3_req;
   request->mh = mh;
-  NanAssignPersistent(request->callback, args[1].As<Function>());
+  request->callback.Reset(info[1].As<Function>());
   request->req.data = request;
 
   uv_queue_work(uv_default_loop(), &request->req,
       node_mpg123_id3_async,
       (uv_after_work_cb)node_mpg123_id3_after);
-
-  NanReturnUndefined();
 }
 
 void node_mpg123_id3_async (uv_work_t *req) {
@@ -312,7 +298,7 @@ void node_mpg123_id3_async (uv_work_t *req) {
 }
 
 void node_mpg123_id3_after (uv_work_t *req) {
-  NanScope();
+  Nan::HandleScope scope;
   id3_req *ireq = (id3_req *)req->data;
 
   mpg123_id3v1 *v1 = ireq->v1;
@@ -323,9 +309,9 @@ void node_mpg123_id3_after (uv_work_t *req) {
   if (r == MPG123_OK) {
     if (v1 != NULL) {
       /* got id3v1 tags */
-      Local<Object> o = NanNew<Object>();
+      Local<Object> o = Nan::New<Object>();
 #define SET(prop) \
-      o->Set(NanNew<String>(#prop), NanNew<String>(v1->prop, min(sizeof(v1->prop), v1->prop == NULL ? 0 : strlen(v1->prop))));
+      Nan::Set(o, Nan::New<String>(#prop).ToLocalChecked(), Nan::New<String>(v1->prop, min(sizeof(v1->prop), v1->prop == NULL ? 0 : strlen(v1->prop))).ToLocalChecked());
       SET(tag);
       SET(title);
       SET(artist);
@@ -333,26 +319,26 @@ void node_mpg123_id3_after (uv_work_t *req) {
       SET(year);
       if (v1->comment[28] == 0 && v1->comment[29] >= 1) {
         /* ID3v1.1 */
-        o->Set(NanNew<String>("comment"), NanNew<String>(v1->comment, min(sizeof(v1->comment) - 2, v1->comment == NULL ? 0 : strlen(v1->comment))));
-        o->Set(NanNew<String>("trackNumber"), NanNew<Integer>(v1->comment[29]));
+        Nan::Set(o, Nan::New<String>("comment").ToLocalChecked(), Nan::New<String>(v1->comment, min(sizeof(v1->comment) - 2, v1->comment == NULL ? 0 : strlen(v1->comment))).ToLocalChecked());
+        Nan::Set(o, Nan::New<String>("trackNumber").ToLocalChecked(), Nan::New<Integer>(v1->comment[29]));
       } else {
         /* ID3v1 */
         SET(comment);
       }
-      o->Set(NanNew<String>("genre"), NanNew<Integer>(v1->genre));
+      Nan::Set(o, Nan::New<String>("genre").ToLocalChecked(), Nan::New<Integer>(v1->genre));
       rtn = o;
 #undef SET
     } else if (v2 != NULL) {
       /* got id3v2 tags */
       mpg123_string *s;
       mpg123_text *t;
-      Local<Object> o = NanNew<Object>();
+      Local<Object> o = Nan::New<Object>();
       Local<Array> a;
       Local<Object> text;
 #define SET(prop) \
       s = v2->prop; \
       if (s != NULL) \
-        o->Set(NanNew<String>(#prop), NanNew<String>(s->p, mpg123_strlen(s, 1)));
+        Nan::Set(o, Nan::New<String>(#prop).ToLocalChecked(), Nan::New<String>(s->p, mpg123_strlen(s, 1)).ToLocalChecked());
       SET(title)
       SET(artist)
       SET(album)
@@ -362,21 +348,21 @@ void node_mpg123_id3_after (uv_work_t *req) {
 #undef SET
 
 #define SET_ARRAY(array, count) \
-      a = NanNew<Array>(v2->count); \
+      a = Nan::New<Array>(v2->count); \
       for (size_t i = 0; i < v2->count; i++) { \
         t = &v2->array[i]; \
-        text = NanNew<Object>(); \
-        a->Set(i, text); \
-        text->Set(NanNew<String>("lang"), NanNew<String>(t->lang, min(sizeof(t->lang), strlen(t->lang)))); \
-        text->Set(NanNew<String>("id"), NanNew<String>(t->id, min(sizeof(t->id), strlen(t->id)))); \
+        text = Nan::New<Object>(); \
+        Nan::Set(a, i, text); \
+        Nan::Set(text, Nan::New<String>("lang").ToLocalChecked(), Nan::New<String>(t->lang, min(sizeof(t->lang), strlen(t->lang))).ToLocalChecked()); \
+        Nan::Set(text, Nan::New<String>("id").ToLocalChecked(), Nan::New<String>(t->id, min(sizeof(t->id), strlen(t->id))).ToLocalChecked()); \
         s = &t->description; \
         if (s != NULL) \
-          text->Set(NanNew<String>("description"), NanNew<String>(s->p, mpg123_strlen(s, 1))); \
+          Nan::Set(text, Nan::New<String>("description").ToLocalChecked(), Nan::New<String>(s->p, mpg123_strlen(s, 1)).ToLocalChecked()); \
         s = &t->text; \
         if (s != NULL) \
-          text->Set(NanNew<String>("text"), NanNew<String>(s->p, mpg123_strlen(s, 1))); \
+          Nan::Set(text, Nan::New<String>("text").ToLocalChecked(), Nan::New<String>(s->p, mpg123_strlen(s, 1)).ToLocalChecked()); \
       } \
-      o->Set(NanNew<String>(#count), a);
+      Nan::Set(o, Nan::New<String>(#count).ToLocalChecked(), a);
       SET_ARRAY(comment_list, comments)
       SET_ARRAY(text, texts)
       SET_ARRAY(extra, extras)
@@ -384,20 +370,20 @@ void node_mpg123_id3_after (uv_work_t *req) {
 
       rtn = o;
     } else {
-      rtn = NanNull();
+      rtn = Nan::Null();
     }
   }
 
   Handle<Value> argv[2];
-  argv[0] = NanNew<Integer>(ireq->rtn);
+  argv[0] = Nan::New<Integer>(ireq->rtn);
   argv[1] = rtn;
 
-  TryCatch try_catch;
+  Nan::TryCatch try_catch;
 
-  NanNew(ireq->callback)->Call(NanGetCurrentContext()->Global(), 2, argv);
+  Nan::New(ireq->callback)->Call(Nan::GetCurrentContext()->Global(), 2, argv);
 
   // cleanup
-  NanDisposePersistent(ireq->callback);
+  ireq->callback.Reset();
   delete ireq;
 
   if (try_catch.HasCaught()) {
@@ -407,10 +393,10 @@ void node_mpg123_id3_after (uv_work_t *req) {
 
 
 void InitMPG123(Handle<Object> target) {
-  NanScope();
+  Nan::HandleScope scope;
 
 #define CONST_INT(value) \
-  target->ForceSet(NanNew<String>(#value), NanNew<Integer>(value), \
+  Nan::ForceSet(target, Nan::New<String>(#value).ToLocalChecked(), Nan::New<Integer>(value), \
       static_cast<PropertyAttribute>(ReadOnly|DontDelete));
 
   // mpg123_errors
@@ -497,23 +483,23 @@ void InitMPG123(Handle<Object> target) {
   CONST_INT(MPG123_ICY);
   CONST_INT(MPG123_NEW_ICY);
 
-  NODE_SET_METHOD(target, "mpg123_init", node_mpg123_init);
-  NODE_SET_METHOD(target, "mpg123_exit", node_mpg123_exit);
-  NODE_SET_METHOD(target, "mpg123_new", node_mpg123_new);
-  NODE_SET_METHOD(target, "mpg123_decoders", node_mpg123_decoders);
-  NODE_SET_METHOD(target, "mpg123_current_decoder", node_mpg123_current_decoder);
-  NODE_SET_METHOD(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
-  NODE_SET_METHOD(target, "mpg123_getformat", node_mpg123_getformat);
-  NODE_SET_METHOD(target, "mpg123_safe_buffer", node_mpg123_safe_buffer);
-  NODE_SET_METHOD(target, "mpg123_outblock", node_mpg123_outblock);
-  NODE_SET_METHOD(target, "mpg123_framepos", node_mpg123_framepos);
-  NODE_SET_METHOD(target, "mpg123_tell", node_mpg123_tell);
-  NODE_SET_METHOD(target, "mpg123_tellframe", node_mpg123_tellframe);
-  NODE_SET_METHOD(target, "mpg123_tell_stream", node_mpg123_tell_stream);
-  NODE_SET_METHOD(target, "mpg123_open_feed", node_mpg123_open_feed);
-  NODE_SET_METHOD(target, "mpg123_feed", node_mpg123_feed);
-  NODE_SET_METHOD(target, "mpg123_read", node_mpg123_read);
-  NODE_SET_METHOD(target, "mpg123_id3", node_mpg123_id3);
+  Nan::SetMethod(target, "mpg123_init", node_mpg123_init);
+  Nan::SetMethod(target, "mpg123_exit", node_mpg123_exit);
+  Nan::SetMethod(target, "mpg123_new", node_mpg123_new);
+  Nan::SetMethod(target, "mpg123_decoders", node_mpg123_decoders);
+  Nan::SetMethod(target, "mpg123_current_decoder", node_mpg123_current_decoder);
+  Nan::SetMethod(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
+  Nan::SetMethod(target, "mpg123_getformat", node_mpg123_getformat);
+  Nan::SetMethod(target, "mpg123_safe_buffer", node_mpg123_safe_buffer);
+  Nan::SetMethod(target, "mpg123_outblock", node_mpg123_outblock);
+  Nan::SetMethod(target, "mpg123_framepos", node_mpg123_framepos);
+  Nan::SetMethod(target, "mpg123_tell", node_mpg123_tell);
+  Nan::SetMethod(target, "mpg123_tellframe", node_mpg123_tellframe);
+  Nan::SetMethod(target, "mpg123_tell_stream", node_mpg123_tell_stream);
+  Nan::SetMethod(target, "mpg123_open_feed", node_mpg123_open_feed);
+  Nan::SetMethod(target, "mpg123_feed", node_mpg123_feed);
+  Nan::SetMethod(target, "mpg123_read", node_mpg123_read);
+  Nan::SetMethod(target, "mpg123_id3", node_mpg123_id3);
 }
 
 } // nodelame namespace

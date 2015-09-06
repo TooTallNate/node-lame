@@ -19,16 +19,16 @@ inline static void wrap_pointer_cb(char *data, void *hint) {
  * Wraps "ptr" into a new SlowBuffer instance with size "length".
  */
 
-inline static v8::Handle<v8::Value> WrapPointer(void *ptr, size_t length) {
+inline static Nan::MaybeLocal<v8::Object> WrapPointer(void *ptr, size_t length) {
   void *user_data = NULL;
-  return NanNewBufferHandle((char *)ptr, length, wrap_pointer_cb, user_data);
+  return Nan::NewBuffer((char *)ptr, length, wrap_pointer_cb, user_data);
 }
 
 /*
  * Wraps "ptr" into a new SlowBuffer instance with length 0.
  */
 
-inline static v8::Handle<v8::Value> WrapPointer(void *ptr) {
+inline static Nan::MaybeLocal<v8::Object> WrapPointer(void *ptr) {
   return WrapPointer((char *)ptr, 0);
 }
 

@@ -22,7 +22,7 @@
     "bindings": "~1.2.0",
     "debug": "2",
     "readable-stream": "1.0",
-    "nan": "~1.8.4"
+    "nan": "~2.0.8"
   },
   "devDependencies": {
     "mocha": "*"
