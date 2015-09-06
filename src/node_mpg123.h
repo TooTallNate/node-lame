@@ -11,7 +11,7 @@ struct feed_req {
   const unsigned char *in;
   size_t size;
   int rtn;
-  v8::Persistent<v8::Function> callback;
+  Nan::Persistent<v8::Function> callback;
 };
 
 struct read_req {
@@ -22,7 +22,7 @@ struct read_req {
   size_t done;
   int rtn;
   int meta;
-  v8::Persistent<v8::Function> callback;
+  Nan::Persistent<v8::Function> callback;
 };
 
 struct id3_req {
@@ -31,7 +31,7 @@ struct id3_req {
   mpg123_id3v1 *v1;
   mpg123_id3v2 *v2;
   int rtn;
-  v8::Persistent<v8::Function> callback;
+  Nan::Persistent<v8::Function> callback;
 };
 
 void node_mpg123_feed_async (uv_work_t *);

@@ -22,7 +22,7 @@ struct encode_req {
   unsigned char *output;
   int output_size;
   int rtn;
-  v8::Persistent<v8::Function> callback;
+  Nan::Persistent<v8::Function> callback;
 };
 
 void node_lame_encode_buffer_async (uv_work_t *);

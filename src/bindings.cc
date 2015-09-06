@@ -27,7 +27,7 @@ void InitLame(Handle<Object>);
 void InitMPG123(Handle<Object>);
 
 void Initialize(Handle<Object> target) {
-  NanScope();
+  Nan::HandleScope scope;
 
   InitLame(target);
   InitMPG123(target);
