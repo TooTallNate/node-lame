@@ -1,5 +1,64 @@
 Changes in libmpg123 libtool interface versions...
 
+42.0.42
+	- added mpg123_framelength()
+	  Now mpg123_position() is truly obsolete!
+	- hardened string API to not crash if given NULL pointers
+	  (except mpg123_init_string())
+	- equalizer feature optional
+
+41.0.41
+	- Add checks for NULL handles in some API functions that missed that, changed return value in others to MPG123_BAD_HANDLE where appropriate:
+		- mpg123_format_none(NULL) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_format_all(NULL)  == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_format(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_reset_eq(NULL)    == MPG123_BAD_HANDLE (was: undefined)
+		- mpg123_replace_buffer(NULL, ...) == MPG123_BAD_HANDLE (was: undefined)
+		- mpg123_framedata(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_decoder(NULL, ...)   == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_param(NULL, ...)     == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_getparam(NULL, ...)  == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_getstate(NULL, ...)  == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_eq(NULL, ...)        == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_open(NULL, ...)      == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_open_handle(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_open_feed(NULL, ...)   == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_replace_reader(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_replace_reader_handle(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_decode_frame(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_feed(NULL, ...)   == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_decode(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_info(NULL, ...)   == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_getformat(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_set_filesize(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_scan(NULL) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_id3(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_icy(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_index(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_set_index(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+		- mpg123_close(NULL, ...) == MPG123_BAD_HANDLE (was: MPG123_ERR)
+	- Changed return value of mpg123_geteq() to 0 for NULL handle to be consistent with itself.
+
+
+40.0.40
+	- Bump for marking the first actual implementation of A-Law encoding.
+	  Not that it matters to anyone, though --- I wonder why not even the
+	  Asterisk users wanted this. It's for telephony, dammit!
+	- Added arm_fpu decoder for runtime switch between NEON and generic fpu.
+
+39.2.39
+	- Added more elaborate post-processing to enable 32 and 24 bit output also with low-precision decoder (16 bit, fixed-point).
+
+39.0.39
+	- Added MPG123_FRESH_DECODER.
+	- Also containing several regression fixes.
+
+38.0.38
+	- Added MPG123_PICTURE and associated addition to mpg123_id3v2 struct.
+
+37.0.37
+	- Added mpg123_chomp_string.
+
 36.0.36
 	- Extended MPG123_RESYNC_LIMIT to initial header search.
 	- Not cutting decoder delay unconditionally anymore (only in combination with known encoder delay / padding).

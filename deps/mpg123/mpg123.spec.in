@@ -1,4 +1,4 @@
-# This is a generic spec file that should "just work" with rpmbuild on any distro.
+bv# This is a generic spec file that should "just work" with rpmbuild on any distro.
 # Make sure you have appropriate -devel packes installed:
 # - the package providing libltdl.so and .la (libtool or libtool-devel)
 # - devel packages for alsa, sdl, etc... to build the respective output modules.
@@ -24,7 +24,7 @@ It can play MPEG1.0/2.0/2.5 layer I, II, II (1, 2, 3;-) files
 raw data to stdout and different sound systems depending on your platform.
 
 %package devel
-Summary:	Files needed for development with mpg123
+Summary:	Files needed for development with libmpg123 or libout123
 Group:		Development/Libraries
 
 %description devel
@@ -34,7 +34,7 @@ Libraries and header files for development with mpg123.
 %setup -q -n %name-%version
 
 %build
-%configure --with-cpu=x86_dither --enable-shared --enable-static --disable-ltdl-install
+%configure --enable-shared --enable-static
 make
 
 %install
@@ -50,19 +50,26 @@ make
 %defattr(644,root,root)
 %doc %{_mandir}/*/mpg123.1.gz
 %{_libdir}/libmpg123.so.*
+%{_libdir}/libout123.so.*
 %{_libdir}/mpg123/output_*.la
 %{_libdir}/mpg123/output_*.so
 
 %files devel
 %defattr(644,root,root)
 %{_libdir}/pkgconfig/libmpg123.pc
+%{_libdir}/pkgconfig/libout123.pc
 %{_includedir}/*.h
 %{_libdir}/libmpg123.a
 %{_libdir}/libmpg123.la
 %{_libdir}/libmpg123.so
+%{_libdir}/libout123.a
+%{_libdir}/libout123.la
+%{_libdir}/libout123.so
 %exclude %{_libdir}/mpg123/output_*.a
 
 %changelog
+* Much later Thomas Orgis <thomas@orgis.org>
+- some blind update
 * Tue Jan  1 2008 Michael Ryzhykh <mclroy@gmail.com>
 - Initial Version.
 

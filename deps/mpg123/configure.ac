@@ -7,16 +7,26 @@ dnl initially written by Nicholas J. Humfrey
 dnl Require autoconf version >= 2.57
 AC_PREREQ(2.57)
 
-
 dnl ############# Initialisation
-AC_INIT([mpg123], [1.14.4], [mpg123-devel@lists.sourceforge.net])
+AC_INIT([mpg123], [1.23.3], [maintainer@mpg123.org])
 dnl Increment API_VERSION when the API gets changes (new functions).
-API_VERSION=36
-LIB_PATCHLEVEL=6
+
+dnl libmpg123
+API_VERSION=42
+LIB_PATCHLEVEL=1
+
+dnl libout123
+OUTAPI_VERSION=1
+OUTLIB_PATCHLEVEL=1
+
 dnl Since we want to be backwards compatible, both sides get set to API_VERSION.
 LIBMPG123_VERSION=$API_VERSION:$LIB_PATCHLEVEL:$API_VERSION
+LIBOUT123_VERSION=$OUTAPI_VERSION:$OUTLIB_PATCHLEVEL:$OUTAPI_VERSION
 AC_SUBST(LIBMPG123_VERSION)
 AC_SUBST(API_VERSION)
+AC_SUBST(LIBOUT123_VERSION)
+AC_SUBST(OUTAPI_VERSION)
+
 
 AC_CONFIG_SRCDIR(src/mpg123.c)
 AC_CONFIG_AUX_DIR(build)
@@ -25,8 +35,10 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_HOST
 
 dnl Version 1.7 of automake is recommended
-AM_INIT_AUTOMAKE(1.7)
-AM_CONFIG_HEADER(src/config.h)
+dnl Not sure what minimal version does not choke on sub directories.
+dnl Testing with 1.14.
+AM_INIT_AUTOMAKE([subdir-objects])
+AC_CONFIG_HEADERS([src/config.h])
 
 
 # You get strange symptoms like jack module build failing because the AC_C_CONST failed to detect the working const support.
@@ -78,8 +90,11 @@ fi
 
 AM_PROG_AS
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_PROG_CPP
 AC_PROG_INSTALL
+AC_CHECK_LIBM
+AC_SUBST(LIBM)
 dnl "Checking for egrep is broken after removal of libltdl stuff... checks use $EGREP, so searching it here."
 AC_PROG_EGREP
 AC_C_CONST
@@ -165,17 +180,8 @@ dnl Configure libtool
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 
-if test x"$modules" = xdisabled
-then
-	echo "Modules still disabled..."
-	MODULE_OBJ="legacy_module.\$(OBJEXT)"
-else
-	MODULE_OBJ="module.\$(OBJEXT)"
-fi
-
 AM_CONDITIONAL( [HAVE_MODULES], [test "x$modules" = xenabled] )
 
-AC_SUBST(MODULE_OBJ)
 AC_SUBST(LT_LDFLAGS)
 AC_SUBST(EXEC_LT_LDFLAGS)
 
@@ -195,12 +201,11 @@ AC_ARG_ENABLE(debug,
 )
 
 AC_ARG_ENABLE(nagging,
-              [  --enable-nagging=[no/yes] turn on GCC's pedantic nagging with error on warnings, also enables debugging ],
+              [  --enable-nagging=[no/yes] turn on GCC's pedantic nagging with error on warnings, does not include --enable-debug anymore ],
               [
                 if test "x$enableval" = xyes
                 then
                   nagging="enabled"
-                  debugging="enabled"
                else
                   nagging="disabled"
                 fi
@@ -387,6 +392,20 @@ if test "x$messages" = "xdisabled"; then
   AC_DEFINE(NO_ERETURN, 1, [ Define to disable error messages in combination with a return value (the return is left intact). ])
 fi
 
+newhuff=enabled
+AC_ARG_ENABLE(new-huffman,
+[  --enable-new-huffman=[yes/no] use new huffman decoding scheme by Taihei (faster on modern CPUs at least, so on by default) ],
+[
+  if test "x$enableval" = xno; then
+    newhuff=disabled
+  fi
+]
+, [])
+
+if test "x$newhuff" = "xenabled"; then
+  AC_DEFINE(USE_NEW_HUFFTABLE, 1, [ Define for new Huffman decoding scheme. ])
+fi
+
 integers=fast
 AC_ARG_ENABLE(int-quality,
 [  --enable-int-quality=[yes/no] use rounding instead of fast truncation for integer output, where possible ],
@@ -433,51 +452,92 @@ AC_ARG_ENABLE(real,
                 fi
               ], [])
 
+equalizer=enabled
+AC_ARG_ENABLE(equalizer,
+              [  --disable-equalizer=[no/yes] no equalizer support ],
+              [
+                if test "x$enableval" = xno; then
+                  equalizer="disabled"
+                fi
+              ], [])
+
+			  
 AC_ARG_WITH([cpu], [
-  --with-cpu=generic[_fpu]      Use generic processor code with floating point arithmetic
+  --with-cpu=generic[[_fpu]]      Use generic processor code with floating point arithmetic
   --with-cpu=generic_float      Plain alias to generic_fpu now... float output is a normal runtime option!
-  --with-cpu=generic_nofpu      Use generic processor code with fixed point arithmetic (p.ex. ARM, experimental)
+  --with-cpu=generic_nofpu      Use generic processor code with fixed point arithmetic (p.ex. ARM)
   --with-cpu=generic_dither     Use generic processor code with floating point arithmetic and dithering for 1to1 16bit decoding.
-  --with-cpu=i386[_fpu]         Use code optimized for i386 processors with floating point arithmetic
-  --with-cpu=i386_nofpu         Use code optimized for i386 processors with fixed point arithmetic (experimental)
+  --with-cpu=i386[[_fpu]]         Use code optimized for i386 processors with floating point arithmetic
+  --with-cpu=i386_nofpu         Use code optimized for i386 processors with fixed point arithmetic
   --with-cpu=i486         Use code optimized for i486 processors (only usable alone!)
   --with-cpu=i586         Use code optimized for i586 processors
   --with-cpu=i586_dither  Use code optimized for i586 processors with dithering (noise shaping), adds 256K to binary size
-  --with-cpu=3dnow        Use code optimized for 3DNow processors
-  --with-cpu=3dnowext     Use code optimized for 3DNowExt processors (K6-3+, Athlon)
+  --with-cpu=3dnow         Use code optimized for 3DNow processors
+  --with-cpu=3dnow_vintage Use code optimized for older 3DNow processors (K6 family)
+  --with-cpu=3dnowext      Use code optimized for 3DNowExt processors (K6-3+, Athlon)
   --with-cpu=3dnowext_alone     Really only 3DNowExt decoder, without 3DNow fallback for flexible rate
+  --with-cpu=3dnow_vintage       Use code optimized for older extended 3DNow processors (like K6-III+)
   --with-cpu=mmx          Use code optimized for MMX processors
   --with-cpu=mmx_alone          Really only MMX decoder, without i586 fallback for flexible rate
   --with-cpu=sse          Use code optimized for SSE processors
+  --with-cpu=sse_vintage  Use code optimized for older SSE processors (plain C DCT36)
   --with-cpu=sse_alone          Really only SSE decoder, without i586 fallback for flexible rate
+  --with-cpu=avx          Use code optimized for x86-64 with AVX processors
   --with-cpu=x86          Pack all x86 opts into one binary (excluding i486, including dither)
-  --with-cpu=x86-64       Use code optimized for x86-64 processors (AMD64 and Intel64, including dithered generic)
+  --with-cpu=x86-64       Use code optimized for x86-64 processors (AMD64 and Intel64, including AVX and dithered generic)
   --with-cpu=altivec      Use code optimized for Altivec processors (PowerPC G4 and G5)
-  --with-cpu=ppc_nofpu    Use code optimized for PowerPC processors with fixed point arithmetic (experimental)
+  --with-cpu=ppc_nofpu    Use code optimized for PowerPC processors with fixed point arithmetic
   --with-cpu=neon         Use code optimized for ARM NEON SIMD engine (Cortex-A series)
-  --with-cpu=arm_nofpu    Use code optimized for ARM processors with fixed point arithmetic (experimental)
+  --with-cpu=arm_fpu      Pack neon and generic[[_dither]] decoders, for ARM processors with FPU and/or NEON
+  --with-cpu=arm_nofpu    Use code optimized for ARM processors with fixed point arithmetic
+  --with-cpu=neon64       Use code optimized for AArch64 NEON SIMD engine
+  --with-cpu=aarch64      Pack neon64 and generic[[_dither]] decoders, for 64bit ARM processors
 ])
 
+use_yasm=auto
+AC_ARG_ENABLE(yasm,
+              [  --enable-yasm=[no/yes] enforce yasm instad of default assembler for some optimizations (AVX, currently) ],
+              [
+                if test "x$enableval" = xyes; then
+                  use_yasm="enabled"
+                else
+                  use_yasm="disabled"
+                fi
+              ], [])
 
-# opt-in for IEEE754 floating point action
-# We want to make sure not to apply hacks relying on IEEE754 storage format on platforms where we did not make sure that this actually is valid.
-# It _should_ be fine for about all computers still out there, but we play safe.
-ieee=no
-case $host in
-  i?86-*|x86_64-*|powerpc*|sparc*)
-    ieee=yes
-  ;;
-esac
-if test "x$ieee" = xyes; then
+AC_ARG_ENABLE(ieeefloat,
+  [  --enable-ieeefloat=[yes/no] use special hackery relying on IEEE 754 floating point storage format (to accurately round to 16 bit integer at bit more efficiently in generic decoder, enabled by default, disable in case you have a very special computer) ],
+  [
+    if test "x$enableval" = xyes; then
+      ieee=enabled
+    else
+      ieee=disabled
+    fi
+  ], [ ieee=enabled ])
+
+if test "x$ieee" = xenabled; then
   echo "We assume IEEE754 floating point format."
   AC_DEFINE(IEEE_FLOAT,   1, [ Define to indicate that float storage follows IEEE754. ])
 fi
 
+sys_cppflags=
 newoldwritesample=disabled
 case $host in
+  aarch64-*-linux*|arm64-*-linux*)
+    cpu_type="aarch64"
+  ;;
+  aarch64-apple-darwin*|arm64-apple-darwin*)
+    cpu_type="aarch64"
+  ;;
+  arm*-*-linux*-*eabihf|armv7hl*-*-linux*)
+    cpu_type="arm_fpu"
+  ;;
   arm*-*-linux*)
     # check that... perhaps we are better off on arm with kernel math emulation
     cpu_type="arm_nofpu"
+  ;;
+  armv7*-apple-darwin*)
+    cpu_type="arm_fpu"
   ;;
   i386-*-linux*|i386-*-kfreebsd*-gnu)
     cpu_type="i386_fpu"
@@ -496,7 +556,7 @@ case $host in
     newoldwritesample=enabled
   ;;
   x86_64-*-linux*|x86_64-*-kfreebsd*-gnu)
-    cpu_type="x86-64_all"
+    cpu_type="x86-64"
   ;;
   *-*-linux*|*-*-kfreebsd*-gnu)
     cpu_type="generic_fpu"
@@ -506,7 +566,7 @@ case $host in
     case `sysctl -n hw.optional.x86_64` in
       1)
         AC_MSG_RESULT([yes])
-        cpu_type="x86-64_all"
+        cpu_type="x86-64"
       ;;
       *)
         AC_MSG_RESULT([no])
@@ -520,7 +580,7 @@ case $host in
     newoldwritesample=enabled
   ;;
   x86_64-apple-darwin*)
-    cpu_type="x86-64_all"
+    cpu_type="x86-64"
   ;;
   *-apple-darwin*)
     AC_MSG_CHECKING([if CPU type supports AltiVec])
@@ -535,12 +595,12 @@ case $host in
       ;;
     esac
   ;;
-  i?86-*-dragonfly* | i?86-*-freebsd* | i?86-*-midnightbsd* | i?86-*-mirbsd* | i?86-*-netbsd* | i?86-*-openbsd*)
+  i?86-*-dragonfly* | i?86-*-freebsd* | i?86-*-midnightbsd* | i?86-*-mirbsd* | i?86-*-netbsd* | i?86-*-openbsd* | i?86-*-haiku*)
     cpu_type="x86"
     newoldwritesample=enabled
   ;;
-  x86_64-*-dragonfly* | x86_64-*-freebsd* | x86_64-*-midnightbsd* | x86_64-*-mirbsd* | x86_64-*-netbsd* | x86_64-*-openbsd*)
-    cpu_type="x86-64_all"
+  x86_64-*-dragonfly* | x86_64-*-freebsd* | x86_64-*-midnightbsd* | x86_64-*-mirbsd* | x86_64-*-netbsd* | x86_64-*-openbsd* | x86_64-*-haiku*)
+    cpu_type="x86-64"
   ;;
   *-*-dragonfly* | *-*-freebsd* | *-*-midnightbsd* | *-*-mirbsd* | *-*-netbsd* | *-*-openbsd*)
     cpu_type="generic_fpu"
@@ -550,7 +610,7 @@ case $host in
     newoldwritesample=enabled
   ;;
   x86_64-*-solaris*)
-    cpu_type=x86-64_all
+    cpu_type=x86-64
   ;;
   *-*-solaris*)
     cpu_type="generic_fpu"
@@ -571,26 +631,26 @@ case $host in
   *-dec-osf*)
     cpu_type="generic_fpu"
   ;;
-  x86_64-pc-cygwin*)
-    cpu_type="x86-64_all"
+  x86_64-*-cygwin*)
+    cpu_type="x86-64"
   ;;
-  i686-pc-cygwin*)
+  i686-*-cygwin*)
     cpu_type="x86"
     newoldwritesample=enabled
   ;;
-  i586-pc-cygwin*)
+  i586-*-cygwin*)
     cpu_type="x86"
     newoldwritesample=enabled
   ;;
-  i486-pc-cygwin*)
+  i486-*-cygwin*)
     cpu_type="i486"
     newoldwritesample=enabled
   ;;
-  i386-pc-cygwin*)
+  i386-*-cygwin*)
     cpu_type="i386"
     newoldwritesample=enabled
   ;;
-  *-pc-cygwin*)
+  *-cygwin*)
     cpu_type="generic_fpu"
   ;;
   i@<:@3-7@:>@86-*-mingw32*)
@@ -604,45 +664,56 @@ case $host in
     buffer=disabled
     cpu_type="x86-64"
   ;;
+  i386-*-nto-qnx*)
+    cpu_type="x86"
+    newoldwritesample=enabled
+  ;;
+  *-ibm-aix*)
+    AC_MSG_WARN([AIX system detected. You might want to --disable-largefile when trouble about conflicting types for lseek64 and friends occurs.])
+    # Altivec instead? It is developed for MacOS ...
+    cpu_type=generic_fpu
+    # no struct winsize without _ALL_SOURCE
+    sys_cppflags=-D_ALL_SOURCE
+  ;;
 	i386-*)
 		AC_MSG_WARN([Unknown host operating system])
 		cpu_type="i386"
 		buffer=disabled
-		ADD_CPPFLAGS="-DGENERIC $ADD_CPPFLAGS"
+		sys_cppflags=-DGENERIC
     newoldwritesample=enabled
 	;;
 	i486-*)
 		AC_MSG_WARN([Unknown host operating system])
 		cpu_type="i486"
 		buffer=disabled
-		ADD_CPPFLAGS="-DGENERIC $ADD_CPPFLAGS"
+		sys_cppflags=-DGENERIC
     newoldwritesample=enabled
 	;;
 	i586-*)
 		AC_MSG_WARN([Unknown host operating system])
 		cpu_type="x86"
 		buffer=disabled
-		ADD_CPPFLAGS="-DGENERIC $ADD_CPPFLAGS"
+		sys_cppflags=-DGENERIC
     newoldwritesample=enabled
 	;;
 	i686-*)
 		AC_MSG_WARN([Unknown host operating system])
 		cpu_type="x86"
 		buffer=disabled
-		ADD_CPPFLAGS="-DGENERIC $ADD_CPPFLAGS"
+		sys_cppflags=-DGENERIC
     newoldwritesample=enabled
 	;;
 	x86_64-*)
 		AC_MSG_WARN([Unknown host operating system])
-		cpu_type="x86-64_all"
+		cpu_type="x86-64"
 		buffer=disabled
-		ADD_CPPFLAGS="-DGENERIC $ADD_CPPFLAGS"
+		sys_cppflags=-DGENERIC
 	;;
   *)
   	AC_MSG_WARN([Unknown host operating system])
     cpu_type="generic_fpu"
     buffer=disabled
-    ADD_CPPFLAGS="-DGENERIC $ADD_CPPFLAGS"
+    sys_cppflags=-DGENERIC
   ;;
 esac
 
@@ -671,32 +742,21 @@ AC_ARG_ENABLE(newoldwritesample,
 	fi
 ])
 
-
-
 dnl Did user choose other CPU type ?
 if test "x$with_cpu" != "x"; then
 	cpu_type=$with_cpu
 fi
 
-if test "x$cpu_type" = "xgeneric_nofpu"; then
-  real=disabled
-  int32=disabled
-fi
-
-if test "x$cpu_type" = "xi386_nofpu"; then
-  real=disabled
-  int32=disabled
-fi
-
-if test "x$cpu_type" = "xppc_nofpu"; then
-  real=disabled
-  int32=disabled
-fi
-
-if test "x$cpu_type" = "xarm_nofpu"; then
-  real=disabled
-  int32=disabled
-fi
+# Flag for 32 bit synth output or post-processing.
+case "$cpu_type" in
+*_nofpu)
+  synth32=false
+  AC_DEFINE(NO_SYNTH32, 1, [ Define for post-processed 32 bit formats. ])
+;;
+*)
+  synth32=true
+;;
+esac
 
 if test "x$int16" = "xdisabled"; then
   AC_DEFINE(NO_16BIT, 1, [ Define to disable 16 bit integer output. ])
@@ -719,16 +779,22 @@ fi
 if test "x$int32" = "xdisabled"; then
   AC_DEFINE(NO_32BIT, 1, [ Define to disable 32 bit and 24 bit integer output. ])
 else
-  s_fpu="$s_fpu synth_s32"
+  if $synth32; then
+    s_fpu="$s_fpu synth_s32"
+  fi
 fi
 
 if test "x$real" = "xdisabled"; then
   AC_DEFINE(NO_REAL, 1, [ Define to disable real output. ])
 else
-  s_fpu="$s_fpu synth_real"
+  if $synth32; then
+    s_fpu="$s_fpu synth_real"
+  fi
 fi
 
-
+if test "x$equalizer" = "xdisabled"; then
+  AC_DEFINE(NO_EQUALIZER, 1, [ Define to disable equalizer. ])
+fi
 
 layer1=enabled
 AC_ARG_ENABLE(layer1,
@@ -786,26 +852,29 @@ AC_ARG_WITH([audio], [
   --with-audio=<list of modules>  Select a list (or only one) of audio output modules (comma or space separated list).
 ])
 AC_ARG_WITH([default-audio], [
-  --with-default-audio=aix        Use AIX as default audio output sub-system
-  --with-default-audio=alib       Use Alib as default audio output sub-system (for HPUX)
-  --with-default-audio=alsa       Use ALSA as default audio output sub-system
-  --with-default-audio=arts       Use aRts as default audio output sub-system (KDE sound server)
-  --with-default-audio=dummy      Use dummy as default audio (when no sound card is available)
-  --with-default-audio=esd        Use ESoundD as default audio output sub-system
-  --with-default-audio=hp         Use HP as default audio output sub-system
-  --with-default-audio=jack       Use JACK as default low-latency audio server
-  --with-default-audio=coreaudio  Use Mac OS X as default audio output sub-system (CoreAudio)
-  --with-default-audio=mint       Use MinT as default audio output sub-system (Atari)
-  --with-default-audio=nas        Use NAS as default audio output (Network Audio System)
-  --with-default-audio=os2        Use OS2 as default audio output sub-system
-  --with-default-audio=oss        Use OSS as default audio output sub-system (/dev/dsp)
-  --with-default-audio=portaudio  Use PortAudio as default audio output sub-system
-  --with-default-audio=pulse      Use Pulse audio server as default audio output sub-system
-  --with-default-audio=sdl        Use SDL as default audio output sub-system (Simple DirectMedia Layer)
-  --with-default-audio=sgi        Use SGI as default audio output sub-system (IRIX)
-  --with-default-audio=sndio      Use OpenBSD's sndio as default audio output sub-system
-  --with-default-audio=sun        Use Sun as default audio output sub-system (/dev/audio)
-  --with-default-audio=win32      Use Win32 audio as default audio output sub-system
+  --with-default-audio=aix            Use AIX as default audio output sub-system
+  --with-default-audio=alib           Use Alib as default audio output sub-system (for HPUX)
+  --with-default-audio=alsa           Use ALSA as default audio output sub-system (libasound)
+  --with-default-audio=tinyalsa       Use ALSA as default audio output sub-system (tinyalsa)
+  --with-default-audio=arts           Use aRts as default audio output sub-system (KDE sound server)
+  --with-default-audio=dummy          Use dummy as default audio (when no sound card is available)
+  --with-default-audio=esd            Use ESoundD as default audio output sub-system
+  --with-default-audio=hp             Use HP as default audio output sub-system
+  --with-default-audio=jack           Use JACK as default low-latency audio server
+  --with-default-audio=coreaudio      Use Mac OS X as default audio output sub-system (CoreAudio)
+  --with-default-audio=mint           Use MinT as default audio output sub-system (Atari)
+  --with-default-audio=nas            Use NAS as default audio output (Network Audio System)
+  --with-default-audio=os2            Use OS2 as default audio output sub-system
+  --with-default-audio=oss            Use OSS as default audio output sub-system (/dev/dsp)
+  --with-default-audio=portaudio      Use PortAudio as default audio output sub-system
+  --with-default-audio=pulse          Use Pulse audio server as default audio output sub-system
+  --with-default-audio=qsa            Use QSA as default audio output sub-system
+  --with-default-audio=sdl            Use SDL as default audio output sub-system (Simple DirectMedia Layer)
+  --with-default-audio=sgi            Use SGI as default audio output sub-system (IRIX)
+  --with-default-audio=sndio          Use OpenBSD's sndio as default audio output sub-system
+  --with-default-audio=sun            Use Sun as default audio output sub-system (/dev/audio)
+  --with-default-audio=win32          Use Win32 audio as default audio output sub-system
+  --with-default-audio=win32_wasapi   Use Win32 wasapi audio as default audio output sub-system
 ])
 
 AC_ARG_WITH([optimization], [
@@ -839,6 +908,18 @@ AC_DEFINE_UNQUOTED( MODULE_FILE_SUFFIX, "$with_module_suffix", [The suffix for m
 dnl ############## Assembler, compiler properties
 
 # based on posting from John Dalgliesh <johnd@defyne.org> on ffmpeg (LGPL) mailing list
+# extended to use balign if present
+AC_MSG_CHECKING([if .balign is present])
+echo '.balign 4' > conftest.s
+if $CCAS -c -o conftest.o conftest.s 1>/dev/null 2>&1; then
+
+  AC_MSG_RESULT([yes])
+  AC_DEFINE(ASMALIGN_BALIGN, 1, [ Define if .balign is present. ])
+
+else
+
+AC_MSG_RESULT([no])
+
 # find if .align arg is power-of-two or not
 asmalign_exp="unknown"
 if test x"$asmalign_exp" = xunknown; then
@@ -855,6 +936,10 @@ if test x"$asmalign_exp" = xunknown; then
 fi
 if test x"$asmalign_exp" = xyes; then
 	AC_DEFINE(ASMALIGN_EXP, 1, [ Define if .align takes 3 for alignment of 2^3=8 bytes instead of 8. ])
+else
+	AC_DEFINE(ASMALIGN_BYTE, 1, [ Define if .align just takes byte count. ])
+fi
+
 fi
 
 ccalign="unknown"
@@ -874,11 +959,66 @@ fi
 dnl We apply alignment hints only to cpus that need it.
 dnl See further below for the definition of CCALIGN
 
+avx_support="unknown"
+if test x"$avx_support" = xunknown; then
+	AC_MSG_CHECKING([if assembler supports AVX instructions])
+	avx_support="no"
+	echo '.text' > conftest.s
+	echo 'vaddps %ymm0,%ymm0,%ymm0' >> conftest.s
+	if $CCAS -c -o conftest.o conftest.s 1>/dev/null 2>&1; then
+		avx_support="yes"
+		AC_MSG_RESULT([yes])
+	else
+		AC_MSG_RESULT([no])
+	fi
+	rm -f conftest.o conftest.s
+fi
+
+check_yasm=no
+if test x"$avx_support" = xno || test x"$use_yasm" = xenabled; then
+  check_yasm=yes
+fi
+if test x"$use_yasm" = xdisabled; then
+  check_yasm=no
+fi
+
+if test x"$check_yasm" = xyes; then
+	AC_CHECK_PROGS(YASM,[yasm],no)
+	if test x"$YASM" != xno; then
+		AC_MSG_CHECKING([if $YASM supports GAS syntax and AVX instructions])
+		echo '.text' > conftest.s
+		echo 'vaddps %ymm0,%ymm0,%ymm0' >> conftest.s
+		if $YASM -pgas -rcpp -o conftest.o conftest.s 1>/dev/null 2>&1; then
+			avx_support="yes"
+			YASMFLAGS="-pgas -rgas -mamd64"
+			AC_MSG_RESULT([yes])
+		else
+			AC_MSG_RESULT([no])
+		fi
+		rm -f conftest.o conftest.s
+	else
+		if test x"$use_yasm" = xenabled; then
+			AC_MSG_ERROR([Yasm enforced but not found!])
+		fi
+	fi
+else
+	YASM="no"
+fi
+
+if test "x$cpu_type" = "xavx"; then
+	if test "x$avx_support" != "xyes"; then
+		AC_MSG_ERROR([Assembler doesn't understand AVX instructions.])
+	fi
+fi
+
+AC_SUBST(YASM)
+AC_SUBST(YASMFLAGS)
+
 dnl ############## Really basic headers, needed for other checks.
 
 AC_HEADER_STDC
 dnl Is it too paranoid to specifically check for stdint.h and limits.h?
-AC_CHECK_HEADERS([stdio.h stdlib.h string.h unistd.h sched.h sys/ioctl.h sys/types.h stdint.h limits.h inttypes.h sys/time.h sys/wait.h sys/resource.h sys/signal.h signal.h])
+AC_CHECK_HEADERS([stdio.h stdlib.h string.h unistd.h sched.h sys/ioctl.h sys/types.h stdint.h limits.h inttypes.h sys/time.h sys/wait.h sys/resource.h sys/signal.h signal.h sys/select.h])
 
 dnl ############## Types
 
@@ -891,12 +1031,16 @@ dnl Using the file_offset_bits variable here is fine for linux (possibly Solaris
 dnl Others... we'll have to see.
 dnl Note: I started writing this with with multiline replacements.
 dnl Does not work. Automake insists on putting these into Makefiles where they break things.
+dnl It is also assumed that a system that does not set file offset bits is not
+dnl sensitive to largefile changes, i.e. FreeBSD always using 64 bit off_t.
 if test "x$ac_cv_sys_file_offset_bits" = x || echo "$ac_cv_sys_file_offset_bits" | $GREP  '@<:@^0-9@:>@' > /dev/null; then
 	dnl if it has non-numeric chars or is empty... ignore...
 	LFS_LOBJ=
+	largefile_sensitive=no
 else
 	# Add dual-mode wrapper code.
 	LFS_LOBJ=lfs_wrap.lo
+	largefile_sensitive=yes
 fi
 
 # Using the lower level macros instead of AC_TYPE_* for compatibility with not freshest autoconf.
@@ -905,6 +1049,7 @@ AC_CHECK_TYPE(uintptr_t, unsigned long)
 AC_CHECK_TYPE(ssize_t, long)
 AC_CHECK_TYPE(off_t,  long int)
 AC_CHECK_TYPE(int32_t, int)
+AC_CHECK_TYPE(int64_t, long long)
 AC_CHECK_TYPE(uint32_t, unsigned int)
 AC_CHECK_TYPE(int16_t, short)
 AC_CHECK_TYPE(uint16_t, unsigned short)
@@ -914,19 +1059,30 @@ AC_CHECK_SIZEOF(off_t,4)
 AC_CHECK_SIZEOF(int32_t)
 AC_CHECK_SIZEOF(long,4)
 
-# The alias functions want to know the native off_t bits.
-# "Native" also means large file offsets, if enabled, it's what is native to the mpg123 library.
-if test "x$ac_cv_sizeof_long" = "x"; then 
-  AC_MSG_ERROR([Cannot determine sizeof(long)?])
+dnl The native type used for aliases is what off_t maps to without any largefile-
+dnl enabling switches. So, it's long int if the system is largefile-senstive,
+dnl but it is actual plain off_t if the system does not have such switches.
+if test "x$largefile_sensitive" = xyes; then
+  lfs_alias_type=long
+  lfs_alias_size=$ac_cv_sizeof_long
 else
-  LFS_ALIAS_BITS=`expr "$ac_cv_sizeof_long" "*" "8"`
+  lfs_alias_type=off_t
+  lfs_alias_size=$ac_cv_sizeof_off_t
+fi
+
+if test "x$lfs_alias_size" = "x"; then 
+  AC_MSG_ERROR([Cannot determine sizeof(lfs_alias_t)?])
+else
+  LFS_ALIAS_BITS=`expr "$lfs_alias_size" "*" "8"`
+  AC_DEFINE_UNQUOTED([lfs_alias_t], $lfs_alias_type,
+    [Define to the native offset type (long or actually off_t).])
   AC_DEFINE_UNQUOTED([LFS_ALIAS_BITS], $LFS_ALIAS_BITS,
-    [Define this to the size of long type in bits, used for LFS small/native alias functions.])
+    [Define this to the size of native offset type in bits, used for LFS alias functions.])
 fi
 
 lfs_alias=enabled
 AC_ARG_ENABLE(lfs-alias,
-              [  --disable-lfs-alias disable alias wrappers for largefile bitness (mpg123_seek_32 in addition to mpg123_seek, mpg123_seek_64 as alias on x86-64) ],
+              [  --disable-lfs-alias disable alias wrappers for largefile bitness (mpg123_seek_32 or mpg123_seek_64 in addition to mpg123_seek, or the other way around; It is a mess, do not play with this!) ],
               [
                 if test "x$enableval" = xno; then
                   lfs_alias="disabled"
@@ -950,6 +1106,8 @@ else
   AC_MSG_RESULT([no])
 fi
 
+# Again, prepend path for non-recursive make.
+LFS_LOBJ=`for i in $LFS_LOBJ; do printf ' src/libmpg123/%s' $i; done`
 AC_SUBST(LFS_LOBJ)
 
 
@@ -1001,7 +1159,7 @@ else
 fi
 
 dnl trying to get that socket lib settled in one line
-AC_SEARCH_LIBS(gethostbyname, nsl socket) 
+AC_SEARCH_LIBS(gethostbyname, nsl socket network) 
 dnl OK, two lines... Solaris needs -lnsl -lsocket
 AC_SEARCH_LIBS(socket, socket) 
 
@@ -1050,11 +1208,14 @@ dnl ############## Choose compiler flags and CPU
 
 # do not assume gcc here, so no flags by default
 ADD_CFLAGS=""
-ADD_CPPFLAGS=""
+ADD_CPPFLAGS="$sys_cppflags"
 ADD_LDFLAGS=""
 LIBS="$LIBS"
 
+# Consider moving that stuff.
 AC_CHECK_HEADER([os2.h], [ADD_CPPFLAGS="$ADD_CPPFLAGS -DOS2"])
+# On OS/2, we need to link to os2term to make terminal control actually work.
+AC_CHECK_LIB([os2term], [tcsetattr], [ADD_LDFLAGS="$ADD_LDFLAGS -los2term"])
 
 # If debugging is enabled then make warnings errors
 if test x"$debugging" = xenabled; then
@@ -1083,29 +1244,45 @@ s_i586="$s_i386 synth_i586"
 s_i586d="$s_i386 synth_i586_dither"
 s_3dnow="$s_i386 synth_3dnow dct64_3dnow equalizer_3dnow"
 s_3dnowext="$s_i386 dct64_3dnowext tabinit_mmx synth_3dnowext"
+s_3dnow_vintage=$s_3dnow
+s_3dnowext_vintage=$s_3dnowext
 if test "x$layer3" = "xenabled"; then
-  s_3dnow="$s_3dnow dct36_3dnow"
-  s_3dnowext="$s_3dnowext dct36_3dnowext"
+  s_3dnow_vintage="$s_3dnow_vintage dct36_3dnow"
+  s_3dnowext_vintage="$s_3dnowext_vintage dct36_3dnowext"
 fi
 s_mmx="$s_i386 dct64_mmx tabinit_mmx synth_mmx"
-s_sse="$s_i386 tabinit_mmx dct64_sse dct64_sse_float synth_sse_float synth_stereo_sse_float synth_sse_s32 synth_stereo_sse_s32 "
-s_x86_64="dct64_x86_64 dct64_x86_64_float synth_x86_64_float synth_x86_64_s32 synth_stereo_x86_64_float synth_stereo_x86_64_s32"
+s_sse_vintage="$s_i386 tabinit_mmx dct64_sse_float synth_sse_float synth_stereo_sse_float synth_sse_s32 synth_stereo_sse_s32 "
+s_sse="$s_sse_vintage dct36_sse"
+s_x86_64="dct36_x86_64 dct64_x86_64_float synth_x86_64_float synth_x86_64_s32 synth_stereo_x86_64_float synth_stereo_x86_64_s32"
+s_x86_64_mono_synths="synth_x86_64_float synth_x86_64_s32"
+s_x86_64_avx="dct36_avx dct64_avx_float synth_stereo_avx_float synth_stereo_avx_s32"
 s_x86multi="getcpuflags"
+s_x86_64_multi="getcpuflags_x86_64"
 s_dither="dither"
-s_neon="dct64_neon dct64_neon_float synth_neon_float synth_neon_s32 synth_stereo_neon_float synth_stereo_neon_s32"
+s_neon="dct36_neon dct64_neon_float synth_neon_float synth_neon_s32 synth_stereo_neon_float synth_stereo_neon_s32"
+s_neon64="dct36_neon64 dct64_neon64_float synth_neon64_float synth_neon64_s32 synth_stereo_neon64_float synth_stereo_neon64_s32"
+s_arm_multi="getcpuflags_arm check_neon"
 
 # choose optimized 16bit decoder for SSE, quality or fast
 # note: supporting deactivation of output formats for these decoders would need more logic here
 if test "x$integers" = "xquality"; then
   s_sse="$s_sse synth_sse_accurate synth_stereo_sse_accurate"
+  s_sse_vintage="$s_sse_vintage synth_sse_accurate synth_stereo_sse_accurate"
   s_x86_64="$s_x86_64 synth_x86_64_accurate synth_stereo_x86_64_accurate"
+  s_x86_64_mono_synths="$s_x86_64_mono_synths synth_x86_64_accurate"
+  s_x86_64_avx="$s_x86_64_avx synth_stereo_avx_accurate"
   s_arm="synth_arm_accurate"
   s_neon="$s_neon synth_neon_accurate synth_stereo_neon_accurate"
+  s_neon64="$s_neon64 synth_neon64_accurate synth_stereo_neon64_accurate"
 else
-  s_sse="$s_sse synth_sse" # no stereo
-  s_x86_64="$s_x86_64 synth_x86_64 synth_stereo_x86_64"
+  s_sse="$s_sse dct64_sse synth_sse" # no stereo
+  s_sse_vintage="$s_sse_vintage dct64_sse synth_sse" # no stereo
+  s_x86_64="$s_x86_64 synth_x86_64 dct64_x86_64 synth_stereo_x86_64"
+  s_x86_64_mono_synths="$s_x86_64_mono_synths synth_x86_64"
+  s_x86_64_avx="$s_x86_64_avx dct64_avx synth_stereo_avx"
   s_arm="synth_arm"
-  s_neon="$s_neon synth_neon synth_stereo_neon"
+  s_neon="$s_neon dct64_neon synth_neon synth_stereo_neon"
+  s_neon64="$s_neon64 dct64_neon64 synth_neon64 synth_stereo_neon64"
 fi
 
 dnl CPU specific compiler flags and sources
@@ -1159,6 +1336,18 @@ dnl Not disabling buffer for float mode... check that this is OK now!
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_NEON -DREAL_IS_FLOAT"
     more_sources="$s_neon $s_fpu"
   ;;
+  arm_fpu)
+    ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_GENERIC -DOPT_GENERIC_DITHER -DOPT_NEON -DREAL_IS_FLOAT"
+    more_sources="$s_neon $s_fpu $s_dither $s_arm_multi"
+  ;;
+  neon64)
+    ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_NEON64 -DREAL_IS_FLOAT"
+    more_sources="$s_neon64 $s_fpu"
+  ;;
+  aarch64)
+    ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_GENERIC -DOPT_GENERIC_DITHER -DOPT_NEON64 -DREAL_IS_FLOAT"
+    more_sources="$s_neon64 $s_fpu $s_dither $s_arm_multi"
+  ;;
   i386) 
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_I386 -DREAL_IS_FLOAT"
     more_sources="$s_fpu $s_i386"
@@ -1192,6 +1381,10 @@ dnl Not disabling buffer for float mode... check that this is OK now!
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_I586 -DOPT_3DNOW -DREAL_IS_FLOAT"
     more_sources="$s_fpu $s_i586 $s_3dnow $s_x86multi "
   ;;
+  3dnow_vintage)
+    ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_I586 -DOPT_3DNOW_VINTAGE -DREAL_IS_FLOAT"
+    more_sources="$s_fpu $s_i586 $s_3dnow_vintage $s_x86multi "
+  ;;
   3dnow_alone)
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_3DNOW -DREAL_IS_FLOAT"
     more_sources="$s_fpu $s_3dnow"
@@ -1199,6 +1392,10 @@ dnl Not disabling buffer for float mode... check that this is OK now!
   3dnowext_alone) 
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_3DNOWEXT -DREAL_IS_FLOAT"
     more_sources="$s_fpu $s_3dnowext"
+  ;;
+  3dnowext_vintage) 
+    ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_3DNOW -DOPT_3DNOWEXT_VINTAGE -DREAL_IS_FLOAT"
+    more_sources="$s_fpu $s_3dnowext_vintage $s_3dnow $s_x86multi"
   ;;
   3dnowext) 
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_3DNOW -DOPT_3DNOWEXT -DREAL_IS_FLOAT"
@@ -1212,17 +1409,39 @@ dnl Not disabling buffer for float mode... check that this is OK now!
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_SSE -DREAL_IS_FLOAT"
     more_sources="$s_fpu $s_sse"
   ;;
-  x86|x86_dither) 
-    ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_GENERIC -DOPT_GENERIC_DITHER -DOPT_I386 -DOPT_I586 -DOPT_I586_DITHER -DOPT_MMX -DOPT_3DNOW -DOPT_3DNOWEXT -DOPT_SSE -DREAL_IS_FLOAT"
-    more_sources="$s_fpu $s_i386 $s_i586 $s_i586d $s_mmx $s_3dnow $s_3dnowext $s_sse $s_x86multi $s_dither"
+  sse_vintage) 
+    ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_SSE_VINTAGE -DREAL_IS_FLOAT"
+    more_sources="$s_fpu $s_sse_vintage"
   ;;
-  x86-64) 
+  avx) 
+    ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_AVX -DREAL_IS_FLOAT"
+    more_sources="$s_fpu $s_x86_64_avx $s_x86_64_mono_synths"
+	if test "x$YASM" != "xno"; then
+		use_yasm_for_avx="yes"
+	fi
+  ;;
+  x86|x86_dither)
+    # plain C dct36 always there, for vintage/non-vintage
+    # Selection of non-/vintage sources implies that
+    # $s_3dnow_vintage contains $s_3dnow,
+    # $s_sse contains $s_sse_vintage.
+    ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_GENERIC -DOPT_GENERIC_DITHER -DOPT_I386 -DOPT_I586 -DOPT_I586_DITHER -DOPT_MMX -DOPT_3DNOW -DOPT_3DNOW_VINTAGE -DOPT_3DNOWEXT -DOPT_3DNOWEXT_VINTAGE -DOPT_SSE -DOPT_SSE_VINTAGE -DREAL_IS_FLOAT"
+    more_sources="$s_fpu $s_i386 $s_i586 $s_i586d $s_mmx $s_3dnow_vintage $s_3dnowext_vintage $s_sse $s_x86multi $s_dither"
+  ;;
+  x86-64_alone) 
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_X86_64 -DREAL_IS_FLOAT"
     more_sources="$s_fpu $s_x86_64"
   ;;
-  x86-64_all|x86-64_dither)
+  x86-64|x86-64_all|x86-64_dither)
     ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_MULTI -DOPT_X86_64 -DOPT_GENERIC -DOPT_GENERIC_DITHER -DREAL_IS_FLOAT"
-    more_sources="$s_fpu $s_x86_64 $s_dither"
+    more_sources="$s_fpu $s_x86_64 $s_dither $s_x86_64_multi"
+	if test "x$avx_support" = "xyes"; then
+		ADD_CPPFLAGS="$ADD_CPPFLAGS -DOPT_AVX"
+		more_sources="$more_sources $s_x86_64_avx"
+		if test "x$YASM" != "xno"; then
+			use_yasm_for_avx="yes"
+		fi
+	fi
   ;;
   *)
   	AC_MSG_ERROR([Unknown CPU type '$cpu_type'])
@@ -1231,7 +1450,7 @@ esac
 
 # Mac OS X specific linker flags
 case $cpu_type in
-  3dnow|3dnow_alone|3dnowext|3dnowext_alone|mmx|mmx_alone|sse|sse_alone|x86|x86_dither)
+  3dnow|3dnow_vintage|3dnow_alone|3dnowext|3dnowext_vintage|3dnowext_alone|mmx|mmx_alone|sse|sse_vintage|sse_alone|x86|x86_dither)
     case $host in
       i386-apple-darwin8*|*-apple-darwin10*)
         ADD_LDFLAGS="$ADD_LDFLAGS -Wl,-read_only_relocs,suppress"
@@ -1243,6 +1462,24 @@ case $cpu_type in
     esac
   ;;
 esac
+
+# Use yasm instead of the default assembler for AVX sources
+if test "x$use_yasm_for_avx" = "xyes"; then
+	case $host_os in
+		*cygwin*|*mingw*)
+			YASM_FORMAT="-f win64"
+		;;
+		*darwin*)
+			YASM_FORMAT="-f macho"
+		;;
+		*)
+			YASM_FORMAT="-f elf"
+		;;
+	esac
+	AC_DEFINE(USE_YASM_FOR_AVX, 1, [Define to use yasm for assemble AVX sources.])
+fi
+AM_CONDITIONAL( [USE_YASM_FOR_AVX], [test "x$use_yasm_for_avx" = xyes] )
+AC_SUBST(YASM_FORMAT)
 
 # Check if we want feature report function.
 AC_MSG_CHECKING([if we want feature report function])
@@ -1263,12 +1500,34 @@ if test "x$feature_report" = xenabled; then
 	more_sources="$more_sources feature"
 fi
 
+# Return 0 if first arg appears in list of following arguments.
+# Return 1 otherwise.
+word_in_list() {
+  word=$1
+  shift
+  # Avoid naming conflict with the outside!
+  # Is local not POSIX sh?
+  for given_word in "$@"
+  do
+    if test "x$word" = "x$given_word"; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 for i in $more_sources
 do
-  # Echo make sure every file is only once in the list.
-  echo "$DECODER_OBJ" | $GREP -v -w "$i\.\$(OBJEXT)" > /dev/null && DECODER_OBJ="$DECODER_OBJ $i.\$(OBJEXT)"
-  echo "$DECODER_LOBJ" | $GREP -v -w "$i\.lo" > /dev/null && DECODER_LOBJ="$DECODER_LOBJ $i.lo"
+  # Make sure every file is only once in the list.
+  word_in_list "$i.\$(OBJEXT)" $DECODER_OBJ || DECODER_OBJ="$DECODER_OBJ $i.\$(OBJEXT)"
+  word_in_list "$i.lo" $DECODER_LOBJ || DECODER_LOBJ="$DECODER_LOBJ $i.lo"
 done
+
+# Another preprocessing step: Append prefix for non-recursive make.
+# Just because $(addprefix ...) is a GNU extension.
+
+DECODER_OBJ=`for i in $DECODER_OBJ; do printf ' src/libmpg123/%s' $i; done`
+DECODER_LOBJ=`for i in $DECODER_LOBJ; do printf ' src/libmpg123/%s' $i; done`
 
 AC_SUBST(DECODER_OBJ)
 AC_SUBST(DECODER_LOBJ)
@@ -1282,7 +1541,15 @@ fi
 dnl ############## Output module choice
 
 # The full list of supported modules to check, first come, first serve.
-check_modules="alsa oss coreaudio sndio sun win32 os2 esd jack portaudio pulse sdl nas arts openal dummy"
+check_modules="alsa tinyalsa oss coreaudio sndio sun win32 win32_wasapi os2 esd jack portaudio pulse sdl nas arts openal dummy"
+# Only check qsa before all else on QNX.
+# It would mask ALSA otherwise.
+case $host in
+  *-nto-qnx*)
+    check_modules="qsa $check_modules"
+  ;;
+esac
+
 # The final list.
 output_modules=
 
@@ -1318,7 +1585,26 @@ do
 				check_failed=yes
 			fi
 		;;
+		tinyalsa)
+			TINYALSA_LIBS="-ltinyalsa"
+			# Check for ALSA
+			AC_CHECK_LIB( [tinyalsa], [pcm_open],
+				[ AC_CHECK_HEADER( [tinyalsa/asoundlib.h],
+					[ output_modules="$output_modules tinyalsa" HAVE_TINYALSA="yes"],
+					[ AC_MSG_WARN([Found TINYALSA library but NOT header files on your system]) ] )
+				]
+			)
+			if test "x$HAVE_TINYALSA" != xyes; then
+				check_failed=yes
+			fi
+		;;
+		# QSA and ALSA are not distinguishable in these tests, need to block
+		# each other and play with test order depending on platform.
 		alsa)
+			if test "x$HAVE_QSA" = xyes; then
+				HAVE_ALSA=no
+			else
+
 			ALSA_LIBS="-lasound"
 			# Check for ALSA
 			AC_CHECK_LIB( [asound], [snd_pcm_open],
@@ -1330,9 +1616,40 @@ do
 			if test "x$HAVE_ALSA" != xyes; then
 				check_failed=yes
 			fi
+
+			fi # HAVE_QSA
+		;;
+		qsa)
+			if test "x$HAVE_ALSA" = xyes; then
+				HAVE_QSA=no
+			else
+
+			QSA_LIBS="-lasound"
+			# Check for QSA
+			AC_CHECK_LIB( [asound], [snd_pcm_open],
+				[ AC_CHECK_HEADER( [sys/asoundlib.h],
+					[ output_modules="$output_modules qsa" HAVE_QSA="yes"],
+					[ AC_MSG_WARN([Found QSA library but NOT header files on your system]) ] )
+				]
+			)
+			if test "x$HAVE_QSA" != xyes; then
+				check_failed=yes
+			fi
+
+			fi # HAVE_ALSA
 		;;
 		jack)
-			PKG_CHECK_MODULES(JACK, jack, output_modules="$output_modules jack" HAVE_JACK="yes", HAVE_JACK="no" check_failed=yes)
+			# JACK module uses semaphores, hence -lpthread.
+			AC_CHECK_LIB( [pthread], [sem_post],
+				[ PKG_CHECK_MODULES(JACK, jack,
+					[
+						output_modules="$output_modules jack"
+						HAVE_JACK="yes"
+						JACK_LIBS="$JACK_LIBS -lpthread"
+					], [ HAVE_JACK="no" check_failed=yes ] )
+				],
+				[ HAVE_JACK=no check_failed=yes ]
+			)
 		;;
 		pulse)
 			PKG_CHECK_MODULES(PULSE, libpulse-simple, output_modules="$output_modules pulse" HAVE_PULSE="yes", HAVE_PULSE="no" check_failed=yes)
@@ -1396,6 +1713,40 @@ do
 			# AC_CHECK_LIB( [winmm], [waveOutOpen] )
 			WIN32_LIBS=-lwinmm
 			AC_CHECK_HEADERS([windows.h], output_modules="$output_modules win32" HAVE_WIN32=yes, HAVE_WIN32=no check_failed=yes)
+		;;
+		win32_wasapi)
+			# Check for windows ... and win32 wasapi audio
+			# Does not work... instead just check for header
+			# AC_CHECK_LIB( [avrt], [] )
+            AC_MSG_CHECKING([if we have wasapi headers])
+            OLD_LIBS=$LIBS
+            LIBS="$LIBS -lole32 -lavrt"
+            AC_LINK_IFELSE([AC_LANG_SOURCE([
+#define COBJMACROS 1
+#define _WIN32_WINNT 0x601
+#include <initguid.h>
+#include <audioclient.h>
+#include <mmdeviceapi.h>
+#include <avrt.h>
+int main(){
+  /* UUID Checks */
+  GUID *IDs[] = {
+    &CLSID_MMDeviceEnumerator,
+    &IID_IMMDeviceEnumerator,
+    &IID_IAudioClient,
+    &IID_IAudioRenderClient
+  };
+  return 0;
+}
+    ])], [HAVE_WIN32_WASAPI=yes], [HAVE_WIN32_WASAPI=no])
+			LIBS=$OLD_LIBS
+			WIN32_WASAPI_LIBS="-lole32 -lavrt"
+			AC_MSG_RESULT([$HAVE_WIN32_WASAPI])
+			if test "x$HAVE_WIN32_WASAPI" = xyes; then
+				output_modules="$output_modules win32_wasapi"
+			else
+				check_failed=yes
+			fi
 		;;
 		sndio)
 			SNDIO_LIBS=-lsndio
@@ -1554,7 +1905,8 @@ if test "x$check_forced" = xyes -a "x$check_failed" = "xyes"; then
 fi
 
 # When you extend check_modules, you should extend this:
-#for i in alsa oss coreaudio sndio sun win32 esd jack portaudio pulse sdl nas aix alib arts hp os2 sgi mint openal dummy; do echo $i; done |
+#for i in alsa qsa oss coreaudio sndio sun win32 win32_wasapi esd jack portaudio pulse sdl nas aix alib arts hp os2 sgi mint openal dummy
+#do echo $i; done |
 #perl -ne 'chomp; $big = uc($_); print <<EOT;
 #AC_SUBST(${big}_LIBS)
 #AC_SUBST(${big}_LDFLAGS)
@@ -1562,10 +1914,18 @@ fi
 #AM_CONDITIONAL( [HAVE_$big], [test "x\$HAVE_$big" = xyes] )
 #EOT
 #'
+AC_SUBST(TINYALSA_LIBS)
+AC_SUBST(TINYALSA_LDFLAGS)
+AC_SUBST(TINYALSA_CFLAGS)
+AM_CONDITIONAL( [HAVE_TINYALSA], [test "x$HAVE_TINYALSA" = xyes] )
 AC_SUBST(ALSA_LIBS)
 AC_SUBST(ALSA_LDFLAGS)
 AC_SUBST(ALSA_CFLAGS)
 AM_CONDITIONAL( [HAVE_ALSA], [test "x$HAVE_ALSA" = xyes] )
+AC_SUBST(QSA_LIBS)
+AC_SUBST(QSA_LDFLAGS)
+AC_SUBST(QSA_CFLAGS)
+AM_CONDITIONAL( [HAVE_QSA], [test "x$HAVE_QSA" = xyes] )
 AC_SUBST(OSS_LIBS)
 AC_SUBST(OSS_LDFLAGS)
 AC_SUBST(OSS_CFLAGS)
@@ -1586,6 +1946,10 @@ AC_SUBST(WIN32_LIBS)
 AC_SUBST(WIN32_LDFLAGS)
 AC_SUBST(WIN32_CFLAGS)
 AM_CONDITIONAL( [HAVE_WIN32], [test "x$HAVE_WIN32" = xyes] )
+AC_SUBST(WIN32_WASAPI_LIBS)
+AC_SUBST(WIN32_WASAPI_LDFLAGS)
+AC_SUBST(WIN32_WASAPI_CFLAGS)
+AM_CONDITIONAL( [HAVE_WIN32_WASAPI], [test "x$HAVE_WIN32_WASAPI" = xyes] )
 AC_SUBST(ESD_LIBS)
 AC_SUBST(ESD_LDFLAGS)
 AC_SUBST(ESD_CFLAGS)
@@ -1657,155 +2021,60 @@ fi
 # That's (beginning of) the list for mpg123's internal default.
 default_output_modules=$default_output_module
 
-OUTPUT_OBJ=
-OUTPUT_MOD=
-OUTPUT_CFLAGS=
-OUTPUT_LIBS=
-OUTPUT_LDFLAGS=
-
 # Setup the static build.
-if test "x$modules" = xdisabled
-then
-	echo "Preparing static output $default_output_module"
-	OUTPUT_MOD="$default_output_module"
-	OUTPUT_OBJ="output/$default_output_module.\$(OBJEXT)"
-	OUTPUT_CFLAGS=
-	OUTPUT_LIBS=
-	# That feels stupid... what about hashed arrays?
-	case $OUTPUT_MOD in
-	# Here's a script for that tedious list, perhaps to be outsourced together with the one in src/output/Makefile.am
-#for i in alsa coreaudio esd jack nas oss portaudio pulse sdl sndio sun win32 aix alib arts hp os2 sgi mint; do echo $i; done |
+# The conditionals always need to be defined by configure, even if
+# HAVE_MODULES is FALSE!
+# Here's a script for that tedious list, perhaps to be outsourced together with the one in #src/output/Makefile.am
+#for i in dummy tinyalsa alsa qsa coreaudio esd jack nas oss portaudio pulse sdl sndio sun win32 win32_wasapi aix alib arts hp os2 sgi mint openal
+#do echo $i; done |
 #perl -ne 'chomp; $big = uc($_); print <<EOT;
-#		$_)
-#			OUTPUT_LIBS="\$${big}_LIBS"
-#			OUTPUT_LDFLAGS="\$${big}_LDFLAGS"
-#			OUTPUT_CFLAGS="\$${big}_CFLAGS"
-#		;;
+#AM_CONDITIONAL([BUILD_${big}], [ test "$_" = \$default_output_module ])
 #EOT
 #'
-		alsa)
-			OUTPUT_LIBS="$ALSA_LIBS"
-			OUTPUT_LDFLAGS="$ALSA_LDFLAGS"
-			OUTPUT_CFLAGS="$ALSA_CFLAGS"
-		;;
-		coreaudio)
-			OUTPUT_LIBS="$COREAUDIO_LIBS"
-			OUTPUT_LDFLAGS="$COREAUDIO_LDFLAGS"
-			OUTPUT_CFLAGS="$COREAUDIO_CFLAGS"
-		;;
-		esd)
-			OUTPUT_LIBS="$ESD_LIBS"
-			OUTPUT_LDFLAGS="$ESD_LDFLAGS"
-			OUTPUT_CFLAGS="$ESD_CFLAGS"
-		;;
-		jack)
-			OUTPUT_LIBS="$JACK_LIBS"
-			OUTPUT_LDFLAGS="$JACK_LDFLAGS"
-			OUTPUT_CFLAGS="$JACK_CFLAGS"
-		;;
-		nas)
-			OUTPUT_LIBS="$NAS_LIBS"
-			OUTPUT_LDFLAGS="$NAS_LDFLAGS"
-			OUTPUT_CFLAGS="$NAS_CFLAGS"
-		;;
-		oss)
-			OUTPUT_LIBS="$OSS_LIBS"
-			OUTPUT_LDFLAGS="$OSS_LDFLAGS"
-			OUTPUT_CFLAGS="$OSS_CFLAGS"
-		;;
-		portaudio)
-			OUTPUT_LIBS="$PORTAUDIO_LIBS"
-			OUTPUT_LDFLAGS="$PORTAUDIO_LDFLAGS"
-			OUTPUT_CFLAGS="$PORTAUDIO_CFLAGS"
-		;;
-		pulse)
-			OUTPUT_LIBS="$PULSE_LIBS"
-			OUTPUT_LDFLAGS="$PULSE_LDFLAGS"
-			OUTPUT_CFLAGS="$PULSE_CFLAGS"
-		;;
-		sdl)
-			OUTPUT_LIBS="$SDL_LIBS"
-			OUTPUT_LDFLAGS="$SDL_LDFLAGS"
-			OUTPUT_CFLAGS="$SDL_CFLAGS"
-		;;
-		sndio)
-			OUTPUT_LIBS="$SNDIO_LIBS"
-			OUTPUT_LDFLAGS="$SNDIO_LDFLAGS"
-			OUTPUT_CFLAGS="$SNDIO_CFLAGS"
-		;;
-		sun)
-			OUTPUT_LIBS="$SUN_LIBS"
-			OUTPUT_LDFLAGS="$SUN_LDFLAGS"
-			OUTPUT_CFLAGS="$SUN_CFLAGS"
-		;;
-		win32)
-			OUTPUT_LIBS="$WIN32_LIBS"
-			OUTPUT_LDFLAGS="$WIN32_LDFLAGS"
-			OUTPUT_CFLAGS="$WIN32_CFLAGS"
-		;;
-		aix)
-			OUTPUT_LIBS="$AIX_LIBS"
-			OUTPUT_LDFLAGS="$AIX_LDFLAGS"
-			OUTPUT_CFLAGS="$AIX_CFLAGS"
-		;;
-		alib)
-			OUTPUT_LIBS="$ALIB_LIBS"
-			OUTPUT_LDFLAGS="$ALIB_LDFLAGS"
-			OUTPUT_CFLAGS="$ALIB_CFLAGS"
-		;;
-		arts)
-			OUTPUT_LIBS="$ARTS_LIBS"
-			OUTPUT_LDFLAGS="$ARTS_LDFLAGS"
-			OUTPUT_CFLAGS="$ARTS_CFLAGS"
-		;;
-		hp)
-			OUTPUT_LIBS="$HP_LIBS"
-			OUTPUT_LDFLAGS="$HP_LDFLAGS"
-			OUTPUT_CFLAGS="$HP_CFLAGS"
-		;;
-		os2)
-			OUTPUT_LIBS="$OS2_LIBS"
-			OUTPUT_LDFLAGS="$OS2_LDFLAGS"
-			OUTPUT_CFLAGS="$OS2_CFLAGS"
-		;;
-		sgi)
-			OUTPUT_LIBS="$SGI_LIBS"
-			OUTPUT_LDFLAGS="$SGI_LDFLAGS"
-			OUTPUT_CFLAGS="$SGI_CFLAGS"
-		;;
-		mint)
-			OUTPUT_LIBS="$MINT_LIBS"
-			OUTPUT_LDFLAGS="$MINT_LDFLAGS"
-			OUTPUT_CFLAGS="$MINT_CFLAGS"
-		;;
-		openal)
-			OUTPUT_LIBS="$OPENAL_LIBS"
-			OUTPUT_LDFLAGS="$OPENAL_LDFLAGS"
-			OUTPUT_CFLAGS="$OPENAL_CFLAGS"
-		;;
-	esac
-else
-	# Now make a comma-separated list again... eliminating the possible duplicate and dummy.
-	for i in $output_modules
-	do
-		if test $i != $default_output_module && test $i != dummy; then
-			default_output_modules=$default_output_modules,$i
-		fi
-	done
+
+AM_CONDITIONAL([BUILD_DUMMY], [ test "dummy" = $default_output_module ])
+AM_CONDITIONAL([BUILD_TINYALSA], [ test "tinyalsa" = $default_output_module ])
+AM_CONDITIONAL([BUILD_ALSA], [ test "alsa" = $default_output_module ])
+AM_CONDITIONAL([BUILD_QSA], [ test "qsa" = $default_output_module ])
+AM_CONDITIONAL([BUILD_COREAUDIO], [ test "coreaudio" = $default_output_module ])
+AM_CONDITIONAL([BUILD_ESD], [ test "esd" = $default_output_module ])
+AM_CONDITIONAL([BUILD_JACK], [ test "jack" = $default_output_module ])
+AM_CONDITIONAL([BUILD_NAS], [ test "nas" = $default_output_module ])
+AM_CONDITIONAL([BUILD_OSS], [ test "oss" = $default_output_module ])
+AM_CONDITIONAL([BUILD_PORTAUDIO], [ test "portaudio" = $default_output_module ])
+AM_CONDITIONAL([BUILD_PULSE], [ test "pulse" = $default_output_module ])
+AM_CONDITIONAL([BUILD_SDL], [ test "sdl" = $default_output_module ])
+AM_CONDITIONAL([BUILD_SNDIO], [ test "sndio" = $default_output_module ])
+AM_CONDITIONAL([BUILD_SUN], [ test "sun" = $default_output_module ])
+AM_CONDITIONAL([BUILD_WIN32], [ test "win32" = $default_output_module ])
+AM_CONDITIONAL([BUILD_WIN32_WASAPI], [ test "win32_wasapi" = $default_output_module ])
+AM_CONDITIONAL([BUILD_AIX], [ test "aix" = $default_output_module ])
+AM_CONDITIONAL([BUILD_ALIB], [ test "alib" = $default_output_module ])
+AM_CONDITIONAL([BUILD_ARTS], [ test "arts" = $default_output_module ])
+AM_CONDITIONAL([BUILD_HP], [ test "hp" = $default_output_module ])
+AM_CONDITIONAL([BUILD_OS2], [ test "os2" = $default_output_module ])
+AM_CONDITIONAL([BUILD_SGI], [ test "sgi" = $default_output_module ])
+AM_CONDITIONAL([BUILD_MINT], [ test "mint" = $default_output_module ])
+AM_CONDITIONAL([BUILD_OPENAL], [ test "openal" = $default_output_module ])
+
+if test "x$modules" = xenabled
+then
+
+  # Now make a comma-separated list again... eliminating the possible duplicate and dummy.
+  for i in $output_modules
+  do
+    if test $i != $default_output_module && test $i != dummy; then
+      default_output_modules=$default_output_modules,$i
+    fi
+  done
 fi
 
 AC_DEFINE_UNQUOTED( DEFAULT_OUTPUT_MODULE, "$default_output_modules", [The default audio output module(s) to use] )
 
-
-AC_SUBST(OUTPUT_OBJ)
-AC_SUBST(OUTPUT_MOD)
-AC_SUBST(OUTPUT_CFLAGS)
-AC_SUBST(OUTPUT_LIBS)
-AC_SUBST(OUTPUT_LDFLAGS)
-
 dnl ############## Compiler Optimizations
 
 CFLAGS="$ADD_CFLAGS $CFLAGS"
+AM_CONDITIONAL([BUILD_BUFFER], [ test x"$buffer" = xenabled ])
 if test x"$buffer" = xdisabled; then
 	ADD_CPPFLAGS="$ADD_CPPFLAGS -DNOXFERMEM"
 fi
@@ -1885,8 +2154,8 @@ win32_sockets_working=no
 win32_wide_working=no
 win32_winver_bump=no
 AC_CHECK_HEADERS([windows.h], [win32_specific_codes=enabled])
-if test "x$win32_specific_codes" = xenabled && test "x$host_os" != "xcygwin"; then
 
+if test "x$win32_specific_codes" = xenabled && test "x$host_os" != "xcygwin"; then
 #### Check for Wide functions
   AC_CHECK_FUNC([_wopen], [win32_unicode=enabled],[win32_unicode=disabled])
   AC_MSG_CHECKING([if we want Unicode File Open for Win32])
@@ -2024,6 +2293,15 @@ fi
 
 fi #END OF WIN32 CHECKS
 
+#### Check mingw.org for EOVERFLOW
+AC_MSG_CHECKING([if we have EOVERFLOW macro])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#include <errno.h>
+int i = (EOVERFLOW) + 0;
+])],[eoverflow_present=yes],[eoverflow_present=no])
+AC_MSG_RESULT([$eoverflow_present])
+AS_IF([test "x$eoverflow_present" = "xyes"],[],[AC_DEFINE([EOVERFLOW],[EFBIG],[Use EFBIG as substitude for EOVERFLOW, mingw.org may lack the latter])])
+
 #### Use Win32 support codes
 AM_CONDITIONAL([WIN32_CODES], [ test "x$win32_specific_codes" = xenabled ])
 
@@ -2076,20 +2354,13 @@ fi
 
 dnl ############## Final Output
 
-# Do that here to prevent the above tests usign -lltdl...
-if test "x$modules" = xenabled; then
-  LIBS="-lltdl $LIBS"
-fi
-
 AC_CONFIG_FILES([
 	Makefile
 	libmpg123.pc
+	libout123.pc
 	mpg123.spec
-	doc/Makefile
-	src/Makefile
-	src/output/Makefile
-	src/libmpg123/Makefile
 	src/libmpg123/mpg123.h
+	src/libout123/out123.h
 ])
 
 AC_OUTPUT
@@ -2119,20 +2390,15 @@ else
   echo "    The lib will (try to) support default offset size, too."
 fi
 echo "  LFS alias symbols ....... $lfs_alias ($LFS_ALIAS_BITS)"
-
-echo "  Alignment checks ........ $aligncheck"
-if test x"$aligncheck" = xenabled; then
-	if test x"$ccalign" != xyes; then
-		echo "   (without effect since special alignment is not employed)"
-	fi
-	if test x"$GCC" = xyes; then
-		echo "   (note that newer gcc 4.x versions do not use/need the align check)"
-	fi
+echo "  LFS alias type .......... $lfs_alias_type"
+if test x"$use_yasm_for_avx" = xyes; then
+  echo "  Use yasm (for AVX only) . enabled"
+else
+  echo "  Use yasm (for AVX only) . disabled"
 fi
-echo -n "
+
+echo "
   Core libmpg123 features:
-  Integer conversion ...... $integers
-  New/old WRITE_SAMPLE .... $newoldwritesample
   Layer I ................. $layer1
   Layer II ................ $layer2
   Layer III ............... $layer3
@@ -2150,9 +2416,14 @@ echo -n "
   16 bit integer .......... $int16
   32/24 bit integer ....... $int32
   real (32 bit float) ..... $real
+  Equalizer ............... $equalizer
+  Optimization detail:
+  Integer conversion ...... $integers
+  IEEE 754 hackery ........ $ieee
+  New/old WRITE_SAMPLE .... $newoldwritesample
+  new Huffman scheme ...... $newhuff
 
-Note: Disabling core features is not commonly done and some combinations might not build/work. If you encounter such a case, help yourself (and provide a patch) or just poke the maintainers.
-"
+Note: Disabling core features is not commonly done and some combinations might not build/work. If you encounter such a case, help yourself (and provide a patch) or just poke the maintainers."
 # just an empty line
 echo
 
@@ -2170,9 +2441,10 @@ if test x"$with_optimization" = x0; then
 	echo "No optimization flags chosen, make sure you have something basic in your CFLAGS at least...
 "
 fi
-if test x"$debugging" = xenabled; then
-	echo "CFLAGS='$CFLAGS'"
-	echo "LIBS='$LIBS'"
-else
-    echo "Next type 'make' and then 'make install'."
-fi
+
+echo
+echo "  CPPFLAGS='$CPPFLAGS'"
+echo "  CFLAGS='$CFLAGS'"
+echo "  LIBS='$LIBS'"
+echo
+echo "Next type 'make' and then 'make install'."
