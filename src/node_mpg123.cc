@@ -134,24 +134,24 @@ NAN_METHOD(node_mpg123_getformat) {
 }
 
 
-NAN_METHOD(node_mpg123_getformat) {
+NAN_METHOD(node_mpg123_info) {
   UNWRAP_MH;
-  mpg123_frameinfo info;
+  mpg123_frameinfo frameinfo;
   int ret;
   Local<Value> rtn;
-  ret = mpg123_info(mh, &info);
+  ret = mpg123_info(mh, &frameinfo);
   if (ret == MPG123_OK) {
     Local<Object> o = Nan::New<Object>();
-    Nan::Set(o, Nan::New<String>("version"), Nan::New<Number>(info.version));
-    Nan::Set(o, Nan::New<String>("layer"), Nan::New<Number>(info.layer));
-    Nan::Set(o, Nan::New<String>("bitRate"), Nan::New<Number>(info.bitrate));
-    Nan::Set(o, Nan::New<String>("sampleRate"), Nan::New<Number>(info.rate));
-    Nan::Set(o, Nan::New<String>("mode"), Nan::New<Number>(info.mode));
-    Nan::Set(o, Nan::New<String>("modeExtension"), Nan::New<Number>(info.mode_ext));
-    Nan::Set(o, Nan::New<String>("frameSize"), Nan::New<Number>(info.framesize));
-    Nan::Set(o, Nan::New<String>("emphasis"), Nan::New<Number>(info.emphasis));
-    Nan::Set(o, Nan::New<String>("vbr"), Nan::New<Number>(info.vbr));
-    Nan::Set(o, Nan::New<String>("averageBitRate"), Nan::New<Number>(info.abr_rate));
+    Nan::Set(o, Nan::New<String>("version"), Nan::New<Number>(frameinfo.version));
+    Nan::Set(o, Nan::New<String>("layer"), Nan::New<Number>(frameinfo.layer));
+    Nan::Set(o, Nan::New<String>("bitRate"), Nan::New<Number>(frameinfo.bitrate));
+    Nan::Set(o, Nan::New<String>("sampleRate"), Nan::New<Number>(frameinfo.rate));
+    Nan::Set(o, Nan::New<String>("mode"), Nan::New<Number>(frameinfo.mode));
+    Nan::Set(o, Nan::New<String>("modeExtension"), Nan::New<Number>(frameinfo.mode_ext));
+    Nan::Set(o, Nan::New<String>("frameSize"), Nan::New<Number>(frameinfo.framesize));
+    Nan::Set(o, Nan::New<String>("emphasis"), Nan::New<Number>(frameinfo.emphasis));
+    Nan::Set(o, Nan::New<String>("vbr"), Nan::New<Number>(frameinfo.vbr));
+    Nan::Set(o, Nan::New<String>("averageBitRate"), Nan::New<Number>(frameinfo.abr_rate));
     rtn = o;
   } else {
     rtn = Nan::New<Integer>(ret);
