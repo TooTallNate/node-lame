@@ -134,6 +134,32 @@ NAN_METHOD(node_mpg123_getformat) {
 }
 
 
+NAN_METHOD(node_mpg123_getformat) {
+  UNWRAP_MH;
+  mpg123_frameinfo info;
+  int ret;
+  Local<Value> rtn;
+  ret = mpg123_info(mh, &info);
+  if (ret == MPG123_OK) {
+    Local<Object> o = Nan::New<Object>();
+    Nan::Set(o, Nan::New<String>("version"), Nan::New<Number>(info.version));
+    Nan::Set(o, Nan::New<String>("layer"), Nan::New<Number>(info.layer));
+    Nan::Set(o, Nan::New<String>("bitRate"), Nan::New<Number>(info.bitrate));
+    Nan::Set(o, Nan::New<String>("sampleRate"), Nan::New<Number>(info.rate));
+    Nan::Set(o, Nan::New<String>("mode"), Nan::New<Number>(info.mode));
+    Nan::Set(o, Nan::New<String>("modeExtension"), Nan::New<Number>(info.mode_ext));
+    Nan::Set(o, Nan::New<String>("frameSize"), Nan::New<Number>(info.framesize));
+    Nan::Set(o, Nan::New<String>("emphasis"), Nan::New<Number>(info.emphasis));
+    Nan::Set(o, Nan::New<String>("vbr"), Nan::New<Number>(info.vbr));
+    Nan::Set(o, Nan::New<String>("averageBitRate"), Nan::New<Number>(info.abr_rate));
+    rtn = o;
+  } else {
+    rtn = Nan::New<Integer>(ret);
+  }
+  info.GetReturnValue().Set(rtn);
+}
+
+
 NAN_METHOD(node_mpg123_safe_buffer) {
   info.GetReturnValue().Set(Nan::New<Number>(mpg123_safe_buffer()));
 }
@@ -490,6 +516,7 @@ void InitMPG123(Handle<Object> target) {
   Nan::SetMethod(target, "mpg123_current_decoder", node_mpg123_current_decoder);
   Nan::SetMethod(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
   Nan::SetMethod(target, "mpg123_getformat", node_mpg123_getformat);
+  Nan::SetMethod(target, "mpg123_info", node_mpg123_info);
   Nan::SetMethod(target, "mpg123_safe_buffer", node_mpg123_safe_buffer);
   Nan::SetMethod(target, "mpg123_outblock", node_mpg123_outblock);
   Nan::SetMethod(target, "mpg123_framepos", node_mpg123_framepos);

@@ -47,8 +47,8 @@ decoder.on('format', onFormat);
 input.pipe(decoder);
 
 function onFormat (format) {
-  console.error('MP3 format: %j', format);
-
+  console.error('MP3 info: %j', decoder.info());
+  console.error('output format: %j', format);
   // write the decoded MP3 data into a WAV file
   var writer = new wav.Writer(format);
   decoder.pipe(writer).pipe(output);
