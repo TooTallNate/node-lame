@@ -66,6 +66,28 @@ describe('Decoder', function () {
       file.pipe(decoder);
     });
 
+    it('should throw error on unsupported sampleRate', function (done) {
+      var file = fs.createReadStream(filename);
+      assert.throws(function () {
+        var decoder = new lame.Decoder({
+          sampleRate: 44200,
+        });
+        file.pipe(decoder);
+      }, /unsupported output format/)
+      done();
+    });
+
+    it('should throw error on unsupported channels', function (done) {
+      var file = fs.createReadStream(filename);
+      assert.throws(function () {
+        var decoder = new lame.Decoder({
+          channels: 4,
+        });
+        file.pipe(decoder);
+      }, /unsupported output format/)
+      done();
+    });
+
     it('should emit a single "finish" event', function (done) {
       var file = fs.createReadStream(filename);
       var output = fs.createWriteStream(outputName);
