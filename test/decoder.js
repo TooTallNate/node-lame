@@ -88,6 +88,17 @@ describe('Decoder', function () {
       done();
     });
 
+    it('should throw error on unsupported bitDepth', function (done) {
+      var file = fs.createReadStream(filename);
+      assert.throws(function () {
+        var decoder = new lame.Decoder({
+          bitDepth: 30,
+        });
+        file.pipe(decoder);
+      }, /unsupported output format/)
+      done();
+    });
+
     it('should emit a single "finish" event', function (done) {
       var file = fs.createReadStream(filename);
       var output = fs.createWriteStream(outputName);
