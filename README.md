@@ -64,11 +64,11 @@ the output PCM data format when creating the decoder instance.
 
 ```javascript
 var decoder = new lame.Decoder({
-  sampleRate: 44100,
-  channels: 1,
+  sampleRate: 44100,  // https://git.io/vNO5m
+  channels: 1,        // 1: MONO, 2: STEREO, 3: Either (Same as the source)
   signed: false,
   float: true,
-  bitDepth: 32,
+  bitDepth: 32,       // https://git.io/vNO5C
 });
 ```
 
