@@ -99,6 +99,38 @@ NAN_METHOD(node_mpg123_open_feed) {
 }
 
 
+NAN_METHOD(node_mpg123_rates) {
+  UNWRAP_MH;
+  const long *rates;
+  size_t nrates = 0;
+  mpg123_rates(&rates, &nrates);
+  Local<Object> o = Nan::New<Object>();
+  Local<Array> list = New<Array>(nrates);
+  for(size_t i = 0; i < nrates; i ++) {
+    list->Set(i, Nan::New<Number>(rates[i]));
+  }
+  Nan::Set(o, Nan::New<String>("list").ToLocalChecked(), list);
+  Nan::Set(o, Nan::New<String>("number").ToLocalChecked(), Nan::New<Number>(nrates));
+  info.GetReturnValue().Set(o);
+}
+
+
+NAN_METHOD(node_mpg123_format_none) {
+  UNWRAP_MH;
+  int ret = mpg123_format_none(mh);
+  info.GetReturnValue().Set(Nan::New<Integer>(ret));
+}
+
+
+NAN_METHOD(node_mpg123_format) {
+  UNWRAP_MH;
+  long rate = Nan::To<int64_t>(info[1]).FromMaybe(0);
+  int channels = Nan::To<int32_t>(info[2]).FromMaybe(0);
+  int encodings = Nan::To<int32_t>(info[3]).FromMaybe(0);
+  int ret = mpg123_format(mh, rate, channels, encodings);
+  info.GetReturnValue().Set(Nan::New<Integer>(ret));
+}
+
 NAN_METHOD(node_mpg123_getformat) {
   UNWRAP_MH;
   long rate;
@@ -489,6 +521,9 @@ void InitMPG123(Handle<Object> target) {
   Nan::SetMethod(target, "mpg123_decoders", node_mpg123_decoders);
   Nan::SetMethod(target, "mpg123_current_decoder", node_mpg123_current_decoder);
   Nan::SetMethod(target, "mpg123_supported_decoders", node_mpg123_supported_decoders);
+  Nan::SetMethod(target, "mpg123_rates", node_mpg123_rates);
+  Nan::SetMethod(target, "mpg123_format_none", node_mpg123_format_none);
+  Nan::SetMethod(target, "mpg123_format", node_mpg123_format);
   Nan::SetMethod(target, "mpg123_getformat", node_mpg123_getformat);
   Nan::SetMethod(target, "mpg123_safe_buffer", node_mpg123_safe_buffer);
   Nan::SetMethod(target, "mpg123_outblock", node_mpg123_outblock);
