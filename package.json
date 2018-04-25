@@ -1,28 +1,21 @@
 {
-  "name": "lame",
-  "description": "NodeJS native bindings to libmp3lame & libmpg123.",
-  "keywords": [
-    "lame",
-    "mpg123",
-    "mp3",
-    "mpeg",
-    "mpg",
-    "encode",
-    "decode"
-  ],
+  "name": "node-addon-mpg123",
+  "description": "NodeJS addon & native bindings to libmpg123.",
+  "keywords": ["mpg123", "mp3", "mpeg", "mpg", "decode"],
   "version": "1.2.4",
   "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
+  "contributors": ["Mingdong Luo <mdluo@live.com> (https://github.com/mdluo)"],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/TooTallNate/node-lame.git"
+    "url": "git://github.com/mdluo/node-addon-mpg123"
   },
   "main": "./index.js",
   "dependencies": {
     "bindings": "^1.2.1",
     "debug": "^2.2.0",
-    "readable-stream": "^1.0.34",
-    "nan": "^2.3.5"
+    "nan": "^2.3.5",
+    "readable-stream": "^1.0.34"
   },
   "devDependencies": {
     "mocha": "^2.4.5"

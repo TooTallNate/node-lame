@@ -1,56 +1,48 @@
-node-lame
+node-addon-mpg123
 =========
-### NodeJS native bindings to libmp3lame & libmpg123
-[![Build Status](https://travis-ci.org/TooTallNate/node-lame.svg?branch=master)](https://travis-ci.org/TooTallNate/node-lame)
 
-For all your async streaming MP3 encoding/decoding needs, there's `node-lame`!
-This module hooks into libmp3lame, the library that the `lame` command uses, to
-provide `Encoder` and `Decoder` streams to NodeJS.
+### NodeJS addon & native bindings to libmpg123
+[![Build Status](https://travis-ci.org/mdluo/node-addon-mpg123.svg?branch=master)](https://travis-ci.org/mdluo/node-addon-mpg123)
+
+`node-addon-mpg123` is based on [TooTallNate/node-lame](https://github.com/TooTallNate/node-lame) and removed `lame` related code to keep it simple. *And extended the `Decoder` to support decoding format  options.*
+
+For all your async streaming MP3 decoding needs, there's `node-addon-mpg123`!
+This module hooks into libmpg123, the library that the `mpg123` command uses, to
+provide `Decoder` streams to NodeJS.
 
 
 Installation
 ------------
 
-`node-lame` comes bundled with its own copy of `libmp3lame` and `libmpg123`, so
+`node-addon-mpg123` comes bundled with its own copy of `libmpg123`, so
 there's no need to have them installed on your system.
 
-Simply compile and install `node-lame` using `npm`:
+Simply compile and install `node-addon-mpg123` using `npm`:
 
 ``` bash
-$ npm install lame
+$ npm install node-addon-mpg123
 ```
-
 
 Example
 -------
 
-Here's an example of using `node-lame` to encode some raw PCM data coming from
-`process.stdin` to an MP3 file that gets piped to `process.stdout`:
+Here's an example of using `node-addon-mpg123` to decode an MP3 file coming from
+`process.stdin` to some raw PCM data that gets piped to `process.stdout`:
 
 ``` javascript
-var lame = require('lame');
+const mpg123 = require('node-addon-mpg123');
 
-// create the Encoder instance
-var encoder = new lame.Encoder({
-  // input
-  channels: 2,        // 2 channels (left and right)
-  bitDepth: 16,       // 16-bit samples
-  sampleRate: 44100,  // 44,100 Hz sample rate
+// create the Decoder instance
+const decoder = new mpg123.Decoder();
 
-  // output
-  bitRate: 128,
-  outSampleRate: 22050,
-  mode: lame.STEREO // STEREO (default), JOINTSTEREO, DUALCHANNEL or MONO
-});
+// MP3 data from stdin gets piped into the decoder
+process.stdin.pipe(decoder);
 
-// raw PCM data from stdin gets piped into the encoder
-process.stdin.pipe(encoder);
-
-// the generated MP3 file gets piped to stdout
-encoder.pipe(process.stdout);
+// the raw PCM data gets piped to stdout
+decoder.pipe(process.stdout);
 ```
 
-See the `examples` directory for some more example code.
+See `test/decoder.js` for some more example code.
 
 API
 ---
@@ -63,18 +55,16 @@ the MP3 file is determined (usually right at the beginning). You can specify
 the output PCM data format when creating the decoder instance.
 
 ```javascript
-var decoder = new lame.Decoder({
-  sampleRate: 44100,  // [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
-  channels: 1,        // [1(MONO), 2(STEREO), 3(either)]
-  signed: false,      // true || false
-  float: true,        // true || false
-  bitDepth: 32,       // [8, 16, 24, 32]
+const mpg123 = require('node-addon-mpg123');
+const decoder = new mpg123.Decoder({
+  sampleRate: 44100,        // [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
+  channels: mpg123.STEREO,  // [mpg123.MONO, mpg123.STEREO, mpg123.MONO | mpg123.STEREO]
+  signed: false,            // [true, false]
+  float: true,              // [true, false]
+  bitDepth: 32,             // [8, 16, 24, 32]
 });
 ```
 
-### Encoder class
+⚠️ The `channels` option is different from the `TooTallNate/node-lame` encoder.
 
-The `Encoder` class is a `Stream` subclass that accepts raw PCM data written to
-it, and outputs a valid MP3 file. You must specify the PCM data format when
-creating the encoder instance. Only 16-bit signed samples are currently
-supported (rescale before passing to the encoder if necessary)...
+See more about mpg123 encoding formats: https://github.com/mdluo/node-addon-mpg123/blob/master/deps/mpg123/src/libmpg123/mpg123.h.in#L348-L395
