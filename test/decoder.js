@@ -44,6 +44,61 @@ describe('Decoder', function () {
       file.pipe(decoder);
     });
 
+    it('should set correct output encoding format', function (done) {
+      var file = fs.createReadStream(filename);
+      var decoder = new lame.Decoder({
+        sampleRate: 44100,
+        channels: 1,
+        signed: false,
+        float: true,
+        bitDepth: 32,
+      });
+      decoder.on('format', function (format) {
+        assert(format);
+        assert.equal(0x200, format.raw_encoding);
+        assert.equal(44100, format.sampleRate);
+        assert.equal(1, format.channels);
+        assert.equal(false, format.signed);
+        assert.equal(true, format.float);
+        assert.equal(32, format.bitDepth);
+        done();
+      });
+      file.pipe(decoder);
+    });
+
+    it('should throw error on unsupported sampleRate', function (done) {
+      var file = fs.createReadStream(filename);
+      assert.throws(function () {
+        var decoder = new lame.Decoder({
+          sampleRate: 44200,
+        });
+        file.pipe(decoder);
+      }, /unsupported output format/)
+      done();
+    });
+
+    it('should throw error on unsupported channels', function (done) {
+      var file = fs.createReadStream(filename);
+      assert.throws(function () {
+        var decoder = new lame.Decoder({
+          channels: 4,
+        });
+        file.pipe(decoder);
+      }, /unsupported output format/)
+      done();
+    });
+
+    it('should throw error on unsupported bitDepth', function (done) {
+      var file = fs.createReadStream(filename);
+      assert.throws(function () {
+        var decoder = new lame.Decoder({
+          bitDepth: 30,
+        });
+        file.pipe(decoder);
+      }, /unsupported output format/)
+      done();
+    });
+
     it('should emit a single "finish" event', function (done) {
       var file = fs.createReadStream(filename);
       var output = fs.createWriteStream(outputName);

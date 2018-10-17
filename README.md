@@ -59,7 +59,18 @@ API
 
 The `Decoder` class is a `Stream` subclass that accepts MP3 data written to it,
 and outputs raw PCM data. It also emits a `"format"` event when the format of
-the MP3 file is determined (usually right at the beginning).
+the MP3 file is determined (usually right at the beginning). You can specify
+the output PCM data format when creating the decoder instance.
+
+```javascript
+var decoder = new lame.Decoder({
+  sampleRate: 44100,  // [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
+  channels: 1,        // [1(MONO), 2(STEREO), 3(either)]
+  signed: false,      // true || false
+  float: true,        // true || false
+  bitDepth: 32,       // [8, 16, 24, 32]
+});
+```
 
 ### Encoder class
 
