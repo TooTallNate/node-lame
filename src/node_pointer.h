@@ -36,7 +36,7 @@ inline static Nan::MaybeLocal<v8::Object> WrapPointer(void *ptr) {
  * Unwraps Buffer instance "buffer" to a C `char *` with the offset specified.
  */
 
-inline static char * UnwrapPointer(v8::Handle<v8::Value> buffer, int64_t offset = 0) {
+inline static char * UnwrapPointer(v8::Local<v8::Value> buffer, int64_t offset = 0) {
   if (node::Buffer::HasInstance(buffer)) {
     return node::Buffer::Data(buffer.As<v8::Object>()) + offset;
   } else {
@@ -50,6 +50,6 @@ inline static char * UnwrapPointer(v8::Handle<v8::Value> buffer, int64_t offset 
  */
 
 template <typename Type>
-inline static Type UnwrapPointer(v8::Handle<v8::Value> buffer) {
+inline static Type UnwrapPointer(v8::Local<v8::Value> buffer) {
   return reinterpret_cast<Type>(UnwrapPointer(buffer));
 }

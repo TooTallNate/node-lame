@@ -43,7 +43,7 @@ NAN_METHOD(PASTE(node_lame_get_, fn)) { \
 } \
 NAN_METHOD(PASTE(node_lame_set_, fn)) { \
   UNWRAP_GFP; \
-  type input = (type)info[1]->PASTE(v8type, Value)(); \
+  type input = (type)info[1]->PASTE(v8type, Value)(Nan::GetCurrentContext()).FromJust(); \
   int output = PASTE(lame_set_, fn)(gfp, input); \
   info.GetReturnValue().Set(Nan::New<Number>(output)); \
 }
@@ -188,12 +188,12 @@ void node_lame_encode_buffer_after (uv_work_t *req) {
 
   encode_req *r = (encode_req *)req->data;
 
-  Handle<Value> argv[1];
+  Local<Value> argv[1];
   argv[0] = Nan::New<Integer>(r->rtn);
 
   Nan::TryCatch try_catch;
 
-  Nan::New(r->callback)->Call(Nan::GetCurrentContext()->Global(), 1, argv);
+  Nan::Call(Nan::New(r->callback), Nan::GetCurrentContext()->Global(), 1, argv);
 
   // cleanup
   r->callback.Reset();
@@ -247,7 +247,7 @@ NAN_METHOD(node_lame_get_id3v1_tag) {
 
   UNWRAP_GFP;
 
-  Local<Object> outbuf = info[1]->ToObject();
+  Local<Object> outbuf = info[1]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
   unsigned char *buf = (unsigned char *)Buffer::Data(outbuf);
   size_t buf_size = (size_t)Buffer::Length(outbuf);
 
@@ -264,7 +264,7 @@ NAN_METHOD(node_lame_get_id3v1_tag) {
 NAN_METHOD(node_lame_get_id3v2_tag) {
   UNWRAP_GFP;
 
-  Local<Object> outbuf = info[1]->ToObject();
+  Local<Object> outbuf = info[1]->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
   unsigned char *buf = (unsigned char *)Buffer::Data(outbuf);
   size_t buf_size = (size_t)Buffer::Length(outbuf);
 
@@ -373,12 +373,12 @@ FN(int, Int32, highpasswidth);
 // ...
 
 
-void InitLame(Handle<Object> target) {
+void InitLame(Local<Object> target) {
   Nan::HandleScope scope;
 
   /* sizeof's */
 #define SIZEOF(value) \
-  Nan::ForceSet(target, Nan::New<String>("sizeof_" #value).ToLocalChecked(), Nan::New<Integer>(static_cast<uint32_t>(sizeof(value))), \
+  Nan::DefineOwnProperty(target, Nan::New<String>("sizeof_" #value).ToLocalChecked(), Nan::New<Integer>(static_cast<uint32_t>(sizeof(value))), \
       static_cast<PropertyAttribute>(ReadOnly|DontDelete))
   SIZEOF(short);
   SIZEOF(int);
@@ -387,7 +387,7 @@ void InitLame(Handle<Object> target) {
 
 
 #define CONST_INT(value) \
-  Nan::ForceSet(target, Nan::New<String>(#value).ToLocalChecked(), Nan::New<Integer>(value), \
+  Nan::DefineOwnProperty(target, Nan::New<String>(#value).ToLocalChecked(), Nan::New<Integer>(value), \
       static_cast<PropertyAttribute>(ReadOnly|DontDelete));
 
   // vbr_mode_e
@@ -476,7 +476,7 @@ void InitLame(Handle<Object> target) {
   LAME_SET_METHOD(highpassfreq);
   LAME_SET_METHOD(highpasswidth);
   // ...
-
+  
   /*
   Nan::SetMethod(target, "lame_get_decode_only", node_lame_get_decode_only);
   Nan::SetMethod(target, "lame_set_decode_only", node_lame_set_decode_only);
