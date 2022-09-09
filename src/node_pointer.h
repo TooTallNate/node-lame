@@ -29,7 +29,7 @@ inline static Nan::MaybeLocal<v8::Object> WrapPointer(void *ptr, size_t length) 
  */
 
 inline static Nan::MaybeLocal<v8::Object> WrapPointer(void *ptr) {
-  return WrapPointer((char *)ptr, 0);
+  return WrapPointer((char *)ptr, 1);
 }
 
 /*
